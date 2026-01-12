@@ -107,5 +107,5 @@ migrate((app) => {
 }, (app) => {
   const collection = app.findCollectionByNameOrId("pbc_1125843985");
 
-  return app.delete(collection);
+  return app.dao().DeleteCollection(collection);
 })

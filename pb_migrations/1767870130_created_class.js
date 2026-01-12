@@ -97,9 +97,9 @@ migrate((app) => {
     "viewRule": null
   });
 
-  return app.save(collection);
+  return app.dao().saveCollection(collection);
 }, (app) => {
   const collection = app.findCollectionByNameOrId("pbc_638429044");
 
-  return app.delete(collection);
+  return app.dao().DeleteCollection(collection);
 })

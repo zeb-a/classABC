@@ -2,7 +2,7 @@
 migrate((app) => {
   const collection = app.findCollectionByNameOrId("r89536d98ce0ef6");
 
-  return app.delete(collection);
+  return app.dao().DeleteCollection(collection);
 }, (app) => {
   const collection = new Collection({
     "createRule": "@request.auth.id != \"\"",
@@ -73,5 +73,5 @@ migrate((app) => {
     "viewRule": ""
   });
 
-  return app.save(collection);
+  return app.dao().saveCollection(collection);
 })

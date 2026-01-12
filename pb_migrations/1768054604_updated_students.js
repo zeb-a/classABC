@@ -9,7 +9,7 @@ migrate((app) => {
     "updateRule": "@request.auth.id != null"
   }, collection)
 
-  return app.save(collection)
+  return app.dao().saveCollection(collection)
 }, (app) => {
   const collection = app.findCollectionByNameOrId("pbc_3827815851")
 
@@ -20,5 +20,5 @@ migrate((app) => {
     "updateRule": null
   }, collection)
 
-  return app.save(collection)
+  return app.dao().saveCollection(collection)
 })

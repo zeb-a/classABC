@@ -14,12 +14,12 @@ migrate((app) => {
     "type": "json"
   }))
 
-  return app.save(collection)
+  return app.dao().saveCollection(collection)
 }, (app) => {
   const collection = app.findCollectionByNameOrId("pbc_638429044")
 
   // remove field
   collection.fields.removeById("json3586673122")
 
-  return app.save(collection)
+  return app.dao().saveCollection(collection)
 })
