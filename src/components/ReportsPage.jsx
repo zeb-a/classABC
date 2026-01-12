@@ -6,7 +6,37 @@ import {
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend);
 
-/* ================= 🧠 AI LOGIC (PRESERVED) ================= */
+/* ================= 🌐 LANGUAGE SELECTION ================= */
+const translations = {
+    en: {
+        mainTitle: (isParentView, className) => isParentView ? 'Student Progress Report' : `${className} Reports`,
+        week: 'Week',
+        month: 'Month',
+        year: 'Year',
+        emptyState: 'No records found for this selection.',
+        aiSummary: 'Teacher Feedback:',
+        positive: 'Positive',
+        needsWork: 'Needs Work',
+        behaviorDistribution: 'Behavior Distribution',
+        ratio: 'Ratio',
+        totalPoints: 'Total Points'
+    },
+    zh: {
+        mainTitle: (isParentView, className) => isParentView ? '学生成长报告' : `${className} 报告`,
+        week: '周',
+        month: '月',
+        year: '年',
+        emptyState: '未找到此选择的记录。',
+        aiSummary: '教师反馈：',
+        positive: '积极表现',
+        needsWork: '需要改进',
+        behaviorDistribution: '行为分布',
+        ratio: '比例',
+        totalPoints: '总分'
+    }
+};
+
+/* ================= 🧠 TEACHER-LIKE TEXT GENERATION ================= */
 
 function classifyPerformance(behavior) {
     const pos = behavior.positive.total;
@@ -24,27 +54,67 @@ function topItems(obj, count) {
         .join(', ');
 }
 
-function generateRobustNote(student, behavior, period, language = 'en') {
+function generateTeacherNote(student, behavior, period, language = 'en') {
     const level = classifyPerformance(behavior);
     const posList = topItems(behavior.positive.byCard, 2);
     const negList = topItems(behavior.negative.byCard, 1);
     const timeFrame = period === 'week' ? 'this past week' : (period === 'month' ? 'the last month' : 'this year');
-
-    const templates = {
-        en: {
-            STRONG: `${student.name} has shown outstanding leadership ${timeFrame}. Their commitment to ${posList || 'class goals'} is inspiring.`,
-            MIXED: `${student.name} is making steady progress ${timeFrame}. While they excel in ${posList || 'certain areas'}, they should stay mindful of consistency.`,
-            CONCERN: `We are monitoring ${student.name}'s engagement ${timeFrame}. Focusing on positive interactions like ${posList || 'helping others'} will help them improve.`
-        }
+    
+    // English templates - realistic teacher feedback
+    const enTemplates = {
+        STRONG: [
+            `${student.name} has demonstrated exceptional effort and leadership qualities ${timeFrame}. Their consistent positive contributions to ${posList || 'class activities'} have been truly impressive. Keep up the excellent work!`,
+            `${student.name} continues to be a role model for their peers. Their dedication to ${posList || 'positive classroom behavior'} is commendable and reflects strong character development.`,
+            `I'm delighted to share that ${student.name} has excelled in ${posList || 'multiple areas of classroom participation'}. Their growth mindset and enthusiasm are evident in everything they do.`
+        ],
+        MIXED: [
+            `${student.name} is showing promise and making progress ${timeFrame}. While they demonstrate strength in ${posList || 'certain areas'}, there are opportunities to build consistency across all aspects of their learning.`,
+            `${student.name} has had moments of great achievement in ${posList || 'various subjects'}, though they would benefit from focusing on developing stronger habits in other areas.`,
+            `${student.name} is on a positive trajectory. With continued effort in ${negList || 'targeted areas'}, I anticipate seeing even greater improvements ahead.`
+        ],
+        CONCERN: [
+            `${student.name} requires additional support ${timeFrame}. I encourage focusing on positive interactions like ${posList || 'helping classmates'} and maintaining better focus during instruction.`,
+            `${student.name} is facing some challenges that we're actively addressing together. Encouraging ${posList || 'positive peer relationships'} will be important for their continued growth.`,
+            `While ${student.name} shows potential, they need to develop stronger self-regulation skills. We're working closely with them to address ${negList || 'behavioral concerns'} constructively.`
+        ]
+    };
+    
+    // Chinese templates - realistic teacher feedback
+    const zhTemplates = {
+        STRONG: [
+            `${student.name}在${timeFrame}展现了卓越的努力和领导才能。他们在${posList || '课堂活动'}中的持续积极贡献令人印象深刻。请继续保持出色的表现！`,
+            `${student.name}继续成为同龄人的榜样。他们对${posList || '课堂积极行为'}的投入值得称赞，体现了优秀的品格发展。`,
+            `我很高兴地分享，${student.name}在${posList || '课堂参与的多个方面'}表现出色。他们的成长心态和热情体现在所做的每件事中。`
+        ],
+        MIXED: [
+            `${student.name}正在取得进步并显示出潜力${timeFrame}。虽然他们在${posList || '某些领域'}表现出优势，但在各个方面建立一致性仍有提升空间。`,
+            `${student.name}在${posList || '各个科目'}中有过出色的成就时刻，尽管他们在其他领域受益于培养更强的习惯。`,
+            `${student.name}正处于积极的发展轨道上。通过在${negList || '目标领域'}继续努力，我期待看到更大的进步。`
+        ],
+        CONCERN: [
+            `${student.name}需要额外的支持${timeFrame}。我鼓励他们专注于像${posList || '帮助同学'}这样的积极互动，并在指导期间保持更好的专注力。`,
+            `${student.name}面临一些我们正在共同积极解决的挑战。鼓励${posList || '积极的同伴关系'}对他们持续成长很重要。`,
+            `虽然${student.name}展示了潜力，但他们需要培养更强的自我调节能力。我们正在与他们密切合作，以建设性地解决${negList || '行为问题'}。`
+        ]
     };
 
-    return templates[language][level] || templates['en'][level];
+    const templates = language === 'zh' ? zhTemplates : enTemplates;
+    
+    // Select a random template from the appropriate category
+    const templateCategory = templates[level];
+    if (templateCategory && templateCategory.length > 0) {
+        const randomIndex = Math.floor(Math.random() * templateCategory.length);
+        return templateCategory[randomIndex];
+    }
+    
+    return templates['MIXED'][0] || "Student is making satisfactory progress."; // fallback
 }
 
 /* ================= 📊 MAIN COMPONENT ================= */
 
 export default function ReportsPage({ activeClass, studentId, isParentView }) {
     const [timePeriod, setTimePeriod] = useState('week'); // 'week', 'month', 'year'
+    const [language, setLanguage] = useState('en'); // 'en' or 'zh'
 
     // 1. SECURITY FILTER: Only show the child if studentId is provided (Portal View)
     const displayStudents = useMemo(() => {
@@ -64,12 +134,36 @@ export default function ReportsPage({ activeClass, studentId, isParentView }) {
         };
     };
 
+    const t = translations[language]; // shorthand for translations
+
     return (
         <div style={styles.container}>
             <div style={styles.header}>
                 <h1 style={styles.mainTitle}>
-                    {isParentView ? 'Student Progress Report' : `${activeClass?.name} Reports`}
+                    {t.mainTitle(isParentView, activeClass?.name)}
                 </h1>
+                
+                {/* Language Selector */}
+                <div style={styles.langSelector}>
+                    <button
+                        onClick={() => setLanguage('en')}
+                        style={{
+                            ...styles.langBtn,
+                            ...(language === 'en' ? styles.langBtnActive : {})
+                        }}
+                    >
+                        English
+                    </button>
+                    <button
+                        onClick={() => setLanguage('zh')}
+                        style={{
+                            ...styles.langBtn,
+                            ...(language === 'zh' ? styles.langBtnActive : {})
+                        }}
+                    >
+                        中文
+                    </button>
+                </div>
                 
                 {/* Time Period Toggles */}
                 <div style={styles.filterBar}>
@@ -82,22 +176,22 @@ export default function ReportsPage({ activeClass, studentId, isParentView }) {
                                 ...(timePeriod === p ? styles.periodBtnActive : {})
                             }}
                         >
-                            {p.charAt(0).toUpperCase() + p.slice(1)}
+                            {t[p]}
                         </button>
                     ))}
                 </div>
             </div>
 
             {displayStudents.length === 0 ? (
-                <div style={styles.emptyState}>No records found for this selection.</div>
+                <div style={styles.emptyState}>{t.emptyState}</div>
             ) : (
                 displayStudents.map(student => {
                     const stats = getStudentStats(student);
-                    const aiNote = generateRobustNote(student, stats, timePeriod);
+                    const teacherNote = generateTeacherNote(student, stats, timePeriod, language);
 
                     // Chart Data
                     const doughnutData = {
-                        labels: ['Positive', 'Needs Work'],
+                        labels: [t.positive, t.needsWork],
                         datasets: [{
                             data: [stats.positive.total || 1, Math.abs(stats.negative.total)],
                             backgroundColor: ['#4CAF50', '#FF5252'],
@@ -117,26 +211,26 @@ export default function ReportsPage({ activeClass, studentId, isParentView }) {
                                 </div>
                                 <div style={styles.scoreBox}>
                                     <div style={styles.bigScore}>{student.score || 0}</div>
-                                    <div style={styles.scoreLabel}>Total Points</div>
+                                    <div style={styles.scoreLabel}>{t.totalPoints}</div>
                                 </div>
                             </div>
 
-                            {/* AI SUMMARY BOX */}
+                            {/* TEACHER FEEDBACK BOX */}
                             <div style={styles.aiInsightSection}>
                                 <div style={styles.aiPulse} />
-                                <p style={styles.aiText}><strong>AI Summary:</strong> {aiNote}</p>
+                                <p style={styles.aiText}><strong>{t.aiSummary}</strong> {teacherNote}</p>
                             </div>
 
                             {/* BENTO GRID FOR CHARTS */}
                             <div style={styles.bentoGrid}>
                                 <div style={styles.gridItemLarge}>
-                                    <h4 style={styles.chartTitle}>Behavior Distribution</h4>
+                                    <h4 style={styles.chartTitle}>{t.behaviorDistribution}</h4>
                                     <div style={{ height: '200px' }}>
                                         <Bar 
                                             data={{
                                                 labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
                                                 datasets: [{
-                                                    label: 'Points Earned',
+                                                    label: t.positive,
                                                     data: [4, 7, 3, 9, 5],
                                                     backgroundColor: '#4CAF50',
                                                     borderRadius: 8
@@ -148,7 +242,7 @@ export default function ReportsPage({ activeClass, studentId, isParentView }) {
                                 </div>
 
                                 <div style={styles.gridItemSmall}>
-                                    <h4 style={styles.chartTitle}>Ratio</h4>
+                                    <h4 style={styles.chartTitle}>{t.ratio}</h4>
                                     <div style={{ height: '140px' }}>
                                         <Doughnut 
                                             data={doughnutData}
@@ -167,8 +261,11 @@ export default function ReportsPage({ activeClass, studentId, isParentView }) {
 
 const styles = {
     container: { padding: '40px', background: '#fff', minHeight: '100vh' },
-    header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', borderBottom: '1px solid #f0f0f0', paddingBottom: '20px' },
-    mainTitle: { fontSize: '24px', fontWeight: '900', color: '#1a1a1a' },
+    header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', borderBottom: '1px solid #f0f0f0', paddingBottom: '20px', flexDirection: 'column', gap: '15px', alignItems: 'flex-start' },
+    mainTitle: { fontSize: '24px', fontWeight: '900', color: '#1a1a1a', margin: 0 },
+    langSelector: { display: 'flex', background: '#f5f5f7', padding: '4px', borderRadius: '12px', marginBottom: '10px' },
+    langBtn: { padding: '8px 16px', border: 'none', background: 'transparent', cursor: 'pointer', borderRadius: '8px', fontWeight: '700', color: '#888' },
+    langBtnActive: { background: '#fff', color: '#4CAF50', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' },
     filterBar: { display: 'flex', background: '#f5f5f7', padding: '4px', borderRadius: '12px' },
     periodBtn: { padding: '8px 16px', border: 'none', background: 'transparent', cursor: 'pointer', borderRadius: '8px', fontWeight: '700', color: '#888' },
     periodBtnActive: { background: '#fff', color: '#4CAF50', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' },
