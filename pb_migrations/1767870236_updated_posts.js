@@ -7,7 +7,7 @@ migrate((app) => {
     "name": "behaviors"
   }, collection)
 
-  return app.save(collection)
+  return app.dao().saveCollection(collection)
 }, (app) => {
   const collection = app.findCollectionByNameOrId("pbc_1125843985")
 
@@ -16,5 +16,5 @@ migrate((app) => {
     "name": "posts"
   }, collection)
 
-  return app.save(collection)
+  return app.dao().saveCollection(collection)
 })

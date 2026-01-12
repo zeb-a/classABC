@@ -1,4 +1,24 @@
-```javascript
-// No build artifacts, dependencies, or temporary files detected in changes
-// Only source files (.jsx) were modified
 ```
+# Database files
+pb_data/*.db
+
+# Environment
+.env
+.env.local
+.env.*
+
+# Logs
+*.log
+
+# Temp files
+*.tmp
+
+# Editors
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+```
+pocketbase_0.22.28_linux_amd64.zip

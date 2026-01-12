@@ -49,7 +49,8 @@ const StudentWorksheetSolver = ({ worksheet, onClose, studentName, studentId, cl
 
     try {
       // Update the class record in PocketBase to include the submission
-      const classResponse = await fetch(`http://localhost:8090/api/collections/classes/records/${classId}`);
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4002';
+      const classResponse = await fetch(`${backendUrl}/api/collections/classes/records/${classId}`);
       if (!classResponse.ok) throw new Error('Failed to fetch class');
       const classData = await classResponse.json();
 
@@ -70,7 +71,7 @@ const StudentWorksheetSolver = ({ worksheet, onClose, studentName, studentId, cl
       }
 
       // Update the class record with new submissions
-      const updateResponse = await fetch(`http://localhost:8090/api/collections/classes/records/${classId}`, {
+      const updateResponse = await fetch(`${backendUrl}/api/collections/classes/records/${classId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -81,8 +82,22 @@ const StudentWorksheetSolver = ({ worksheet, onClose, studentName, studentId, cl
       });
 
       if (!updateResponse.ok) {
-        const errorData = await updateResponse.json();
-        throw new Error(errorData.message || 'Failed to submit assignment');
+        // Try to get error message from response, fallback to status text if not JSON
+        let errorMessage = `HTTP error! status: ${updateResponse.status}`;
+        try {
+          const errorData = await updateResponse.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch (e) {
+          // If response is not JSON, try to get text
+          try {
+            const errorText = await updateResponse.text();
+            errorMessage = errorText || errorMessage;
+          } catch (textError) {
+            // If we can't get the text either, use status text
+            errorMessage = updateResponse.statusText || errorMessage;
+          }
+        }
+        throw new Error(errorMessage);
       }
 
       // Update the local state as well for immediate UI feedback
