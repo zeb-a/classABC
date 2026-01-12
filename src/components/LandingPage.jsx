@@ -153,6 +153,9 @@ if (studentData) {
       return true;
     }) || [];
 
+    // Force a re-render when assignments change by using a key that depends on the assignments
+    const assignmentsKey = JSON.stringify(studentAssignments.map(a => a.id));
+
     // 2. If a student is currently doing a worksheet, show the Solver
     if (activeWorksheet) {
       return (
@@ -196,7 +199,7 @@ if (studentData) {
           {/* --- ASSIGNMENTS SECTION (The fix is here) --- */}
           <h3 style={{ fontSize: '24px', fontWeight: 900, marginBottom: '20px', color: '#1E293B' }}>My Live Worksheets</h3>
           
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+          <div key={assignmentsKey} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
             {studentAssignments.map((asn) => (
               <div key={asn.id} style={modernStyles.assignmentCard}>
                 <div style={modernStyles.asnIcon}><BookOpen color="#6366F1" /></div>
