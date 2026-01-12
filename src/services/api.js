@@ -362,6 +362,8 @@ async getStudentByParentCode(code) {
         ...c,
         students: typeof c.students === 'string' ? JSON.parse(c.students || '[]') : (c.students || []),
         tasks: typeof c.tasks === 'string' ? JSON.parse(c.tasks || '[]') : (c.tasks || []), // Parse tasks JSON
+        assignments: typeof c.assignments === 'string' ? JSON.parse(c.assignments || '[]') : (c.assignments || []), // Parse assignments JSON
+        submissions: typeof c.submissions === 'string' ? JSON.parse(c.submissions || '[]') : (c.submissions || []), // Parse submissions JSON
         Access_Codes: typeof c.Access_Codes === 'string' ? JSON.parse(c.Access_Codes || '{}') : (c.Access_Codes || {})
       }));
     } catch (err) {
@@ -411,6 +413,8 @@ async getStudentByParentCode(code) {
               teacher: email,
               students: JSON.stringify(cls.students || []), // Serialize students to JSON
               tasks: JSON.stringify(behaviorsForTasks),      // Serialize behaviors to 'tasks' JSON
+              assignments: JSON.stringify(cls.assignments || []), // Serialize assignments to JSON
+              submissions: JSON.stringify(cls.submissions || []), // Serialize submissions to JSON
               Access_Codes: cls.Access_Codes || {}
             };
 
@@ -433,7 +437,9 @@ async getStudentByParentCode(code) {
                 name: cls.name,
                 teacher: email,
                 students: JSON.stringify(cls.students || []), // Serialize students to JSON
-                tasks: JSON.stringify(behaviorsForTasks)      // Serialize behaviors to 'tasks' JSON
+                tasks: JSON.stringify(behaviorsForTasks),      // Serialize behaviors to 'tasks' JSON
+                assignments: JSON.stringify(cls.assignments || []), // Serialize assignments to JSON
+                submissions: JSON.stringify(cls.submissions || []) // Serialize submissions to JSON
               })
             });
             processedIds.add(created.id);

@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { 
   Plus, Send, Trash2, ChevronLeft, Image as ImageIcon,
-  Type, List, AlignLeft, Grid, FileText, X, GripVertical
+  Type, List, AlignLeft, Grid, FileText, X, GripVertical,
+  Users, User
 } from 'lucide-react';
 
 export default function AssignmentsPage({ activeClass, onBack, onPublish }) {
@@ -9,6 +10,8 @@ export default function AssignmentsPage({ activeClass, onBack, onPublish }) {
   const [questions, setQuestions] = useState([
     { id: 1, type: 'text', question: '', image: null, options: [''], paragraph: '', pairs: [{left: '', right: ''}] }
   ]);
+  const [assignToAll, setAssignToAll] = useState(true); // New state for assigning to all students
+  const [selectedStudents, setSelectedStudents] = useState([]); // New state for selected students
   
   const fileInputRef = useRef(null);
   const [activePhotoId, setActivePhotoId] = useState(null);
@@ -36,6 +39,17 @@ export default function AssignmentsPage({ activeClass, onBack, onPublish }) {
     }
   };
 
+  // Toggle student selection
+  const toggleStudentSelection = (studentId) => {
+    setSelectedStudents(prev => {
+      if (prev.includes(studentId)) {
+        return prev.filter(id => id !== studentId);
+      } else {
+        return [...prev, studentId];
+      }
+    });
+  };
+
   return (
     <div style={styles.container}>
       <header style={styles.header}>
@@ -48,13 +62,81 @@ export default function AssignmentsPage({ activeClass, onBack, onPublish }) {
             onChange={e => setTitle(e.target.value)}
           />
         </div>
-        <button 
-          onClick={() => onPublish({ title: title || "New Worksheet", questions, date: new Date().toISOString() })} 
-          style={styles.publishBtn}
-        >
-          <Send size={18} /> Publish to Class
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {/* Assignment Distribution Options */}
+          <div style={styles.distributionSelector}>
+            <div 
+              style={{ 
+                ...styles.toggleButton, 
+                background: assignToAll ? '#4F46E5' : '#E2E8F0',
+                color: assignToAll ? '#fff' : '#64748B'
+              }}
+              onClick={() => setAssignToAll(true)}
+            >
+              <Users size={16} /> All Students
+            </div>
+            <div 
+              style={{ 
+                ...styles.toggleButton, 
+                background: !assignToAll ? '#4F46E5' : '#E2E8F0',
+                color: !assignToAll ? '#fff' : '#64748B'
+              }}
+              onClick={() => setAssignToAll(false)}
+            >
+              <User size={16} /> Select Students
+            </div>
+          </div>
+          
+          <button 
+            onClick={() => onPublish({ 
+              title: title || "New Worksheet", 
+              questions, 
+              date: new Date().toISOString(),
+              assignedTo: assignToAll ? 'all' : selectedStudents,
+              assignedToAll: assignToAll
+            })} 
+            style={styles.publishBtn}
+          >
+            <Send size={18} /> Publish to Class
+          </button>
+        </div>
       </header>
+
+      {!assignToAll && (
+        <div style={styles.studentSelector}>
+          <h3 style={{ margin: '0 0 15px 0', fontSize: '16px', fontWeight: '700' }}>Select Students:</h3>
+          <div style={styles.studentList}>
+            {activeClass?.students?.map(student => (
+              <div 
+                key={student.id}
+                style={{
+                  ...styles.studentItem,
+                  background: selectedStudents.includes(student.id) ? '#EEF2FF' : '#fff',
+                  border: `2px solid ${selectedStudents.includes(student.id) ? '#4F46E5' : '#E2E8F0'}`
+                }}
+                onClick={() => toggleStudentSelection(student.id)}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{
+                    width: '20px',
+                    height: '20px',
+                    borderRadius: '50%',
+                    border: '2px solid #4F46E5',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    {selectedStudents.includes(student.id) && (
+                      <div style={{ width: '8px', height: '8px', background: '#4F46E5', borderRadius: '50%' }}></div>
+                    )}
+                  </div>
+                  <span>{student.name}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div style={styles.workspace}>
         <aside style={styles.sidebar}>
@@ -200,5 +282,10 @@ const styles = {
   pairRow: { display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '10px' },
   pairInput: { flex: 1, padding: '12px', borderRadius: '10px', border: '1px solid #E2E8F0' },
   matchLine: { width: '30px', height: '2px', background: '#CBD5E1' },
-  questionRow: { display: 'flex', gap: '20px' }
+  questionRow: { display: 'flex', gap: '20px' },
+  distributionSelector: { display: 'flex', borderRadius: '8px', border: '1px solid #E2E8F0', overflow: 'hidden' },
+  toggleButton: { padding: '8px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', background: '#E2E8F0', fontWeight: '600' },
+  studentSelector: { padding: '20px 40px', background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' },
+  studentList: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '10px' },
+  studentItem: { padding: '10px 15px', borderRadius: '8px', cursor: 'pointer', border: '2px solid #E2E8F0', transition: 'all 0.2s' }
 };
