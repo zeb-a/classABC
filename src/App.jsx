@@ -243,9 +243,13 @@ function App() {
             const newClasses = prevClasses.map(c => {
               // Use String conversion to be 100% sure the IDs match
               if (String(c.id) === String(activeClass.id)) {
+                // If assignment is for all students, keep all functionality as before
+                // If assignment is for specific students, we still store it in the class but handle visibility differently
                 return {
                   ...c,
-                  assignments: [...(c.assignments || []), newAsn]
+                  assignments: [...(c.assignments || []), newAsn],
+                  // Initialize submissions array if it doesn't exist
+                  submissions: c.submissions || []
                 };
               }
               return c;
@@ -253,6 +257,10 @@ function App() {
             console.log("Teacher just updated classes. New count:", newClasses);
             return newClasses;
           });
+
+          // Simulate a notification to students that a new assignment is available
+          // This would trigger updates in the student portals
+          console.log("Assignment published successfully:", newAsn.title);
 
           setIsAssignmentStudioOpen(false);
         }}

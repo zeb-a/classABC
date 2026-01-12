@@ -468,12 +468,8 @@ export default function ClassDashboard({
             <MessagesView
               activeClass={activeClass}
               submissions={activeClass.submissions || []}
-              // onGrade={openGradingModal}
-              onClose={() => setViewMode('students')}
-              onGrade={(subId, gradeData) => {
-           // Logic to add points to student and mark as graded
-           console.log("Grading submission:", subId, gradeData);
-        }}
+              onGrade={openGradingModal}
+              onClose={() => setViewMode('dashboard')}
             />
           ) : (
             <>
