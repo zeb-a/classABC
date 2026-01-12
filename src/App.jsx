@@ -239,12 +239,11 @@ function App() {
           const newAsn = { 
             ...assignmentData, 
             id: Date.now(),
-            assignedTo: assignmentData.assignedTo || 'all',  // Store who it's assigned to
-            assignedToAll: assignmentData.assignedToAll !== undefined ? assignmentData.assignedToAll : true,  // Default to all
             // Ensure consistent formatting of assignedTo array
             assignedTo: Array.isArray(assignmentData.assignedTo) ? 
               assignmentData.assignedTo.map(id => String(id)) : 
-              assignmentData.assignedTo
+              (assignmentData.assignedTo || 'all'),  // Store who it's assigned to
+            assignedToAll: assignmentData.assignedToAll !== undefined ? assignmentData.assignedToAll : true  // Default to all
           };
 
           setClasses(prevClasses => {

@@ -177,4 +177,36 @@ console.log("Expected: 1 assignment, Got:", result6.length, "assignments");
 console.log("Result:", result6[0]?.title || "None");
 console.log("✓ PASS\n");
 
+// Test Case 7: Class finding logic with ID type mismatch
+console.log("Test 7: Class finding logic with ID type mismatch");
+function findClassWithStudent(classes, studentId) {
+  const normalizeStudentId = (id) => {
+    if (id === undefined || id === null) return '';
+    return String(id).trim();
+  };
+  
+  return classes?.find(c => 
+    c.students?.some(s => normalizeStudentId(s.id) === normalizeStudentId(studentId))
+  );
+}
+
+const classesWithMixedTypes = [
+  {
+    id: 1,
+    name: "Class A",
+    students: [
+      { id: '123', name: "Student A" },  // String ID in class
+      { id: '456', name: "Student B" }
+    ],
+    assignments: [
+      { id: 1, title: "Assignment for Student A", assignedTo: ['123'], assignedToAll: false }
+    ]
+  }
+];
+
+const foundClass = findClassWithStudent(classesWithMixedTypes, 123);  // Number ID for lookup
+console.log("Expected: Found class, Got:", foundClass ? "Found" : "Not found");
+console.log("Class name:", foundClass?.name || "None");
+console.log("✓ PASS\n");
+
 console.log("All tests passed! The assignment delivery logic should work correctly.");

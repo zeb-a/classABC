@@ -134,15 +134,15 @@ const handleLogin = async (e) => {
 if (studentData) {
     // 1. ALWAYS find the most up-to-date class data from the global 'classes' prop
     // This ensures that when a teacher publishes, the student sees it immediately.
-    const liveClassData = classes?.find(c => 
-      c.students?.some(s => s.id === studentData.studentId)
-    ) || studentData.classData;
-
-    // Helper function to normalize student ID for comparison
+    // Use normalized ID comparison to handle string/number mismatches
     const normalizeStudentId = (id) => {
       if (id === undefined || id === null) return '';
       return String(id).trim();
     };
+    
+    const liveClassData = classes?.find(c => 
+      c.students?.some(s => normalizeStudentId(s.id) === normalizeStudentId(studentData.studentId))
+    ) || studentData.classData;
 
     // Filter assignments to only show those assigned to this student
     // If assignedTo is 'all' or if the student is in the selected list

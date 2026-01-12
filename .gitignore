@@ -1,1 +1,1 @@
-Nothing should be ignored since the changes only include source files (.js, .jsx) and not any build artifacts, dependencies, or temporary files.
+Nothing needs to be added to .gitignore since the changes only include source code files (.js, .jsx) and no build artifacts, dependencies, or temporary files.
