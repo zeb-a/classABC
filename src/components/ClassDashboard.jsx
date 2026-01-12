@@ -3,7 +3,7 @@ import {
   Dices, Trophy, Settings, Home, UserPlus, Camera,
   ChevronLeft, ChevronRight, Sliders, ChevronDown,
   CheckSquare, BarChart2, QrCode, ClipboardList, Inbox,
-  Plus, Send, CheckCircle, X, Bell
+Plus, Send, CheckCircle, X, Bell
 } from 'lucide-react';
 import ReportsPage from './ReportsPage';
 import StudentCard from './StudentCard';
@@ -83,7 +83,47 @@ const MessagesView = ({ activeClass, onGrade, onClose }) => {
     </div>
   );
 };
+// Helper component to fix Tooltip positioning
+const SidebarIcon = ({ icon: Icon, label, onClick, isActive, badge, style }) => {
+  const [hovered, setHovered] = React.useState(false);
 
+  return (
+    <div 
+      style={{ position: 'relative', display: 'flex', justifyContent: 'center', width: '100%' }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <Icon 
+        onClick={onClick} 
+        style={{ ...style, color: isActive ? '#4CAF50' : style?.color || '#636E72' }} 
+      />
+      
+      {/* Render Badge if passed */}
+      {badge}
+
+      {/* Render Tooltip relative to THIS icon */}
+      {hovered && (
+        <div style={{
+          position: 'absolute',
+          left: '60px', // Pushes it to the right of the sidebar
+          top: '50%',
+          transform: 'translateY(-50%)', // Centers it vertically relative to the ICON
+          background: '#2D3436',
+          color: 'white',
+          padding: '6px 12px',
+          borderRadius: '8px',
+          zIndex: 2000,
+          whiteSpace: 'nowrap',
+          fontSize: '14px',
+          pointerEvents: 'none',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+        }}>
+          {label}
+        </div>
+      )}
+    </div>
+  );
+};
 export default function ClassDashboard({
   user,
   activeClass,
@@ -125,8 +165,9 @@ export default function ClassDashboard({
 
   const generate5DigitCode = () => Math.floor(10000 + Math.random() * 90000).toString();
 
-  // Calculate unread messages - now using student_submissions from PocketBase
-  const submissions = activeClass.student_submissions || [];
+  // Calculate unread messages
+  const submissions = (activeClass.studentAssignments || [])
+  .filter(sa => sa.status === 'submitted');
   const unreadCount = submissions.filter(s => s.status === 'submitted').length;
 
   useEffect(() => {
@@ -163,19 +204,35 @@ export default function ClassDashboard({
 
   // --- ASSIGNMENT LOGIC ---
   const handleCreateAssignment = (newAssignment) => {
-    updateClasses(prev => prev.map(c => {
-      if (c.id === activeClass.id) {
-        return {
-          ...c,
-          assignments: [...(c.assignments || []), newAssignment]
-        };
-      }
-      return c;
-    }));
-    setViewMode('dashboard');
-    // Simulate a student submission for demo purposes after 3 seconds
-    setTimeout(() => simulateStudentSubmission(newAssignment.id), 3000);
-  };
+  updateClasses(prev =>
+    prev.map(c => {
+      if (c.id !== activeClass.id) return c;
+
+      // 🔹 CREATE STUDENT ASSIGNMENT COPIES
+      const studentAssignments = c.students.map(s => ({
+        id: crypto.randomUUID(),
+        assignmentId: newAssignment.id,
+        studentId: s.id,
+        classId: c.id,
+        status: 'assigned',
+        answers: {},
+        assignedAt: new Date().toISOString()
+      }));
+
+      return {
+        ...c,
+        assignments: [...(c.assignments || []), newAsn],
+        studentAssignments: [
+          ...(c.studentAssignments || []),
+          ...studentAssignments
+        ]
+      };
+    })
+  );
+
+  setViewMode('dashboard');
+};
+
 
   const simulateStudentSubmission = (assignmentId) => {
     // Pick a random student to simulate submission
@@ -193,6 +250,7 @@ export default function ClassDashboard({
 
     updateClasses(prev => prev.map(c => {
       if (c.id === activeClass.id) {
+
         return {
           ...c,
           student_submissions: [...(c.student_submissions || []), newSubmission]
@@ -208,11 +266,11 @@ export default function ClassDashboard({
     setGradingModalOpen(true);
   };
 
-  const submitGrade = async () => {
+ const submitGrade = async () => {
     if (!currentSubmission) return;
     const points = parseInt(gradeInput) || 0;
 
-    try {
+        try {
       // Update the class record in PocketBase to update the submission status
       const classResponse = await fetch(`http://localhost:8090/api/collections/classes/records/${activeClass.id}`);
       if (!classResponse.ok) throw new Error('Failed to fetch class');
@@ -266,7 +324,7 @@ export default function ClassDashboard({
         } : c
       ));
 
-      setGradingModalOpen(false);
+         setGradingModalOpen(false);
       setCurrentSubmission(null);
     } catch (error) {
       console.error('Error grading assignment:', error);
@@ -422,69 +480,103 @@ export default function ClassDashboard({
     <>
       <div style={styles.layout}>
         {/* --- SIDEBAR --- */}
-        <nav
-          style={{
-            ...styles.sidebar,
-            position: 'fixed',
-            left: 0,
-            top: 0,
-            height: '100vh',
-            zIndex: 1000,
-            transform: sidebarVisible ? 'translateX(0)' : 'translateX(-100%)',
-            transition: 'transform 0.3s ease',
-            boxShadow: sidebarVisible ? '0 0 20px rgba(0,0,0,0.1)' : 'none'
-          }}
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-            <div style={{ width: 44, height: 44, borderRadius: 10, background: '#E8F5E9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', color: '#2E7D32' }}>
-              {(user && (user.name || user.email) || '').charAt(0).toUpperCase()}
-            </div>
-          </div>
-          <Home onClick={() => { onBack(); setViewMode('dashboard'); }} onMouseEnter={() => setHoveredIcon('back')} onMouseLeave={() => setHoveredIcon(null)} style={styles.icon} title="Back" />
+        {/* --- SIDEBAR --- */}
+<nav
+  style={{
+    ...styles.sidebar,
+    position: 'fixed',
+    left: 0,
+    top: 0,
+    height: '100vh',
+    zIndex: 1000,
+    transform: sidebarVisible ? 'translateX(0)' : 'translateX(-100%)',
+    transition: 'transform 0.3s ease',
+    boxShadow: sidebarVisible ? '0 0 20px rgba(0,0,0,0.1)' : 'none'
+  }}
+>
+  {/* User Initial Circle */}
+  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+    <div style={{ width: 44, height: 44, borderRadius: 10, background: '#E8F5E9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', color: '#2E7D32' }}>
+      {(user && (user.name || user.email) || '').charAt(0).toUpperCase()}
+    </div>
+  </div>
 
-          {/* NEW: ASSIGNMENTS ICON */}
-          <ClipboardList
-            onClick={() => {
-              console.log("Triggering App.jsx state...");
-              onOpenAssignments(); // This tells App.jsx to show the AssignmentsPage
-            }}
-            style={styles.icon}
-            title="Assignment Studio"
-          />
-          {/* NEW: MESSAGES ICON WITH BADGE */}
-          <div style={{ position: 'relative' }}>
-            <Inbox
-              onClick={() => setViewMode('messages')}
-              onMouseEnter={() => setHoveredIcon('messages')}
-              onMouseLeave={() => setHoveredIcon(null)}
-              style={{ ...styles.icon, color: viewMode === 'messages' ? '#4CAF50' : '#636E72' }}
-              title="Messages & Grading"
+  <SidebarIcon 
+    icon={Home} 
+    label="Back to Dashboard" 
+    onClick={() => { onBack(); setViewMode('dashboard'); }} 
+    style={styles.icon} 
+  />
 
-            />
-            {activeClass.student_submissions?.filter(s => s.status === 'submitted').length > 0 && (
-    <span style={styles.badge}>
-      {activeClass.student_submissions.filter(s => s.status === 'submitted').length}
-    </span>
-  )}
-            {unreadCount > 0 && (
-              <div style={styles.badge}>{unreadCount}</div>
-            )}
-          </div>
+  <SidebarIcon 
+    icon={ClipboardList} 
+    label="Assignment Studio" 
+    onClick={onOpenAssignments} 
+    style={styles.icon} 
+  />
 
-          <Dices onClick={() => setIsLuckyDrawOpen(true)} onMouseEnter={() => setHoveredIcon('lucky')} onMouseLeave={() => setHoveredIcon(null)} style={styles.icon} />
-          <Trophy onClick={onOpenEggRoad} onMouseEnter={() => setHoveredIcon('egg')} onMouseLeave={() => setHoveredIcon(null)} style={styles.icon} />
-          <CheckSquare onClick={() => setIsAttendanceMode(!isAttendanceMode)} onMouseEnter={() => setHoveredIcon('attendance')} onMouseLeave={() => setHoveredIcon(null)} style={{ ...styles.icon, color: isAttendanceMode ? '#4CAF50' : '#666' }} />
-          <Settings onClick={onOpenSettings} onMouseEnter={() => setHoveredIcon('settings')} onMouseLeave={() => setHoveredIcon(null)} style={styles.icon} />
-          <QrCode onClick={ensureCodesAndOpen} onMouseEnter={() => setHoveredIcon('codes')} onMouseLeave={() => setHoveredIcon(null)} style={styles.icon} />
-          <BarChart2 onClick={() => { setShowReports(true); updateClasses(prev => prev.map(c => c.id === activeClass.id ? { ...c, isViewingReports: true } : c)); }} onMouseEnter={() => setHoveredIcon('reports')} onMouseLeave={() => setHoveredIcon(null)} style={styles.icon} />
+  <SidebarIcon 
+    icon={Inbox} 
+    label="Messages & Grading" 
+    onClick={() => setViewMode('messages')}
+    isActive={viewMode === 'messages'}
+    style={styles.icon}
+    badge={(
+      <>
+        {activeClass.student_submissions?.filter(s => s.status === 'submitted').length > 0 && (
+          <span style={styles.badge}>
+          {activeClass.student_submissions.filter(s => s.status === 'submitted').length}
+         </span>
+        )}
+      </>
+    )}
+  />
 
-          {/* Tooltips Logic (Simplified) */}
-          {hoveredIcon && (
-            <div style={{ position: 'absolute', left: '80px', top: '50%', transform: 'translateY(-50%)', background: '#2D3436', color: 'white', padding: '8px 12px', borderRadius: '8px', zIndex: 2000 }}>
-              {hoveredIcon.charAt(0).toUpperCase() + hoveredIcon.slice(1)}
-            </div>
-          )}
-        </nav>
+  <SidebarIcon 
+    icon={Dices} 
+    label="Lucky Draw" 
+    onClick={() => setIsLuckyDrawOpen(true)} 
+    style={styles.icon} 
+  />
+
+  <SidebarIcon 
+    icon={Trophy} 
+    label="Egg Road" 
+    onClick={onOpenEggRoad} 
+    style={styles.icon} 
+  />
+
+  <SidebarIcon 
+    icon={CheckSquare} 
+    label="Attendance" 
+    onClick={() => setIsAttendanceMode(!isAttendanceMode)} 
+    isActive={isAttendanceMode}
+    style={styles.icon} 
+  />
+
+  <SidebarIcon 
+    icon={Settings} 
+    label="Settings" 
+    onClick={onOpenSettings} 
+    style={styles.icon} 
+  />
+
+  <SidebarIcon 
+    icon={QrCode} 
+    label="Access Codes" 
+    onClick={ensureCodesAndOpen} 
+    style={styles.icon} 
+  />
+
+  <SidebarIcon 
+    icon={BarChart2} 
+    label="Reports" 
+    onClick={() => { setShowReports(true); updateClasses(prev => prev.map(c => c.id === activeClass.id ? { ...c, isViewingReports: true } : c)); }} 
+    style={styles.icon} 
+  />
+  
+  {/* REMOVE THE OLD TOOLTIP LOGIC THAT WAS HERE */}
+</nav>
 
         <button
           onClick={() => setSidebarVisible(!sidebarVisible)}
@@ -499,7 +591,7 @@ export default function ClassDashboard({
           {viewMode === 'messages' ? (
             <MessagesView
               activeClass={activeClass}
-              onGrade={openGradingModal}
+               onGrade={openGradingModal}
               onClose={() => setViewMode('dashboard')}
             />
           ) : (
@@ -520,15 +612,12 @@ export default function ClassDashboard({
                       ✓ Save Attendance
                     </button>
                   )}
-                  
                   {/* Assignment Submission Notifications */}
-                  <AssignmentSubmissionNotification 
-                    submissions={activeClass.student_submissions || []} 
-                    onNotificationClick={(notification) => {
+                  <AssignmentSubmissionNotification
+                          onNotificationClick={(notification) => {
                       setViewMode('messages');
                     }}
                   />
-                  
                   <div style={{ position: 'relative' }}>
                     <button onClick={() => setShowGridMenu(!showGridMenu)} style={styles.actionBtn}>
                       <Sliders size={18} /> Display
@@ -609,7 +698,7 @@ export default function ClassDashboard({
               <h3>Grade {currentSubmission.student.name}'s Submission</h3>
               <p style={{ marginBottom: '10px', color: '#666' }}>Assignment: {currentSubmission.assignment.title}</p>
               <div style={{ background: '#F9FAFB', padding: '15px', borderRadius: '10px', marginBottom: '20px' }}>
-                <strong>Student Answers:</strong>
+                 <strong>Student Answers:</strong>
                 {Object.entries(currentSubmission.submission.answers).map(([questionId, answer], index) => (
                   <div key={index} style={{ marginBottom: '10px', padding: '10px', background: '#fff', borderRadius: '5px' }}>
                     <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>Question {index + 1}:</div>
