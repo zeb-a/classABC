@@ -73,7 +73,6 @@ function App() {
   // 1. Add state to track if we are in the assignment studio
   const [isAssignmentStudioOpen, setIsAssignmentStudioOpen] = useState(false);
 
-
   const [showGuide, setShowGuide] = useState(false);
 
   const saveTimeoutRef = useRef(null);
@@ -237,22 +236,40 @@ function App() {
         activeClass={activeClass}
         onBack={() => setIsAssignmentStudioOpen(false)}
         onPublish={(assignmentData) => {
-          const newAsn = { ...assignmentData, id: Date.now() };
+          const newAsn = { 
+            ...assignmentData, 
+            id: Date.now(),
+            assignedTo: assignmentData.assignedTo || 'all',  // Store who it's assigned to
+            assignedToAll: assignmentData.assignedToAll !== undefined ? assignmentData.assignedToAll : true,  // Default to all
+            // Ensure consistent formatting of assignedTo array
+            assignedTo: Array.isArray(assignmentData.assignedTo) ? 
+              assignmentData.assignedTo.map(id => String(id)) : 
+              assignmentData.assignedTo
+          };
 
           setClasses(prevClasses => {
             const newClasses = prevClasses.map(c => {
               // Use String conversion to be 100% sure the IDs match
               if (String(c.id) === String(activeClass.id)) {
+                // If assignment is for all students, keep all functionality as before
+                // If assignment is for specific students, we still store it in the class but handle visibility differently
                 return {
                   ...c,
-                  assignments: [...(c.assignments || []), newAsn]
+                  assignments: [...(c.assignments || []), newAsn],
+                  // Initialize submissions array if it doesn't exist
+                  submissions: c.submissions || []
                 };
               }
               return c;
             });
-            console.log("Teacher just updated classes. New count:", newClasses);
+            console.log("Teacher just updated classes. New assignments:", newClasses.find(c => c.id === activeClass.id)?.assignments);
             return newClasses;
           });
+
+          // Simulate a notification to students that a new assignment is available
+          // This would trigger updates in the student portals
+          console.log("Assignment published successfully:", newAsn.title);
+          console.log("Assigned to:", newAsn.assignedTo, "Assigned to all:", newAsn.assignedToAll);
 
           setIsAssignmentStudioOpen(false);
         }}

@@ -131,13 +131,38 @@ const handleLogin = async (e) => {
 //     );
 //   }
 // Inside AccessCodePortal component
-
 if (studentData) {
     // 1. ALWAYS find the most up-to-date class data from the global 'classes' prop
     // This ensures that when a teacher publishes, the student sees it immediately.
     const liveClassData = classes?.find(c => 
       c.students?.some(s => s.id === studentData.studentId)
     ) || studentData.classData;
+
+    // Helper function to normalize student ID for comparison
+    const normalizeStudentId = (id) => {
+      if (id === undefined || id === null) return '';
+      return String(id).trim();
+    };
+
+    // Filter assignments to only show those assigned to this student
+    // If assignedTo is 'all' or if the student is in the selected list
+    const studentAssignments = liveClassData?.assignments?.filter(assignment => {
+      // If assignedToAll is true, all students can see it
+      if (assignment.assignedToAll === true || assignment.assignedTo === 'all') {
+        return true;
+      }
+      // If specific students are assigned, check if current student is in the list
+      // Handle potential type mismatches (string vs number IDs) and normalization
+      if (Array.isArray(assignment.assignedTo) && assignment.assignedTo.length > 0) {
+        const normalizedStudentId = normalizeStudentId(studentData.studentId);
+        return assignment.assignedTo.some(id => normalizeStudentId(id) === normalizedStudentId);
+      }
+      // Default: show the assignment
+      return true;
+    }) || [];
+
+    // Force a re-render when assignments change by using a key that depends on the assignments
+    const assignmentsKey = JSON.stringify(studentAssignments.map(a => a.id));
 
     // 2. If a student is currently doing a worksheet, show the Solver
     if (activeWorksheet) {
@@ -146,9 +171,10 @@ if (studentData) {
           worksheet={activeWorksheet} 
           onClose={() => setActiveWorksheet(null)} 
           studentName={studentData.studentName}
+          studentId={studentData.studentId}
+          classId={liveClassData?.id}
           classes={classes}
           setClasses={setClasses}
-          classId={liveClassData?.id}
         />
       );
     }
@@ -181,8 +207,8 @@ if (studentData) {
           {/* --- ASSIGNMENTS SECTION (The fix is here) --- */}
           <h3 style={{ fontSize: '24px', fontWeight: 900, marginBottom: '20px', color: '#1E293B' }}>My Live Worksheets</h3>
           
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-            {liveClassData?.assignments?.map((asn) => (
+          <div key={assignmentsKey} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+            {studentAssignments.map((asn) => (
               <div key={asn.id} style={modernStyles.assignmentCard}>
                 <div style={modernStyles.asnIcon}><BookOpen color="#6366F1" /></div>
                 <div style={{ flex: 1 }}>
@@ -198,7 +224,7 @@ if (studentData) {
               </div>
             ))}
             
-            {(!liveClassData?.assignments || liveClassData.assignments.length === 0) && (
+            {(studentAssignments.length === 0) && (
               <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '40px', background: '#fff', borderRadius: '24px', border: '2px dashed #E2E8F0' }}>
                 <p style={{ color: '#64748B', fontWeight: 600 }}>No assignments yet! Keep it up. 🌟</p>
               </div>
@@ -480,7 +506,7 @@ export default function LandingPage({ onLoginSuccess, classes, setClasses }) {
     </div>
   );
 }
-const StudentWorksheetSolver = ({ worksheet, onClose, studentName }) => {
+const StudentWorksheetSolver = ({ worksheet, onClose, studentName, studentId, classId, classes, setClasses }) => {
   const [answers, setAnswers] = useState({});
 
 const handleSubmit = () => {
@@ -489,7 +515,7 @@ const handleSubmit = () => {
     assignmentId: worksheet.id,
     assignmentTitle: worksheet.title,
     studentName: studentName,
-    studentId: studentData.studentId,
+    studentId: String(studentId), // Ensure studentId is string for consistency
     answers: answers,
     submittedAt: new Date().toISOString(),
     status: 'submitted'
@@ -497,7 +523,7 @@ const handleSubmit = () => {
 
   // Update the global classes state in App.jsx
   const updatedClasses = classes.map(c => {
-    if (c.id === studentData.classData.id) {
+    if (c.id === classId) {
       return {
         ...c,
         submissions: [...(c.submissions || []), submission]
