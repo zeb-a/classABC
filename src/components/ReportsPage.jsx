@@ -201,6 +201,7 @@ function generateTeacherNote(student, behavior, period, language = 'en') {
 export default function ReportsPage({ activeClass, studentId, isParentView, onBack }) {
     const [timePeriod, setTimePeriod] = useState('week'); // 'week', 'month', 'year'
     const [language, setLanguage] = useState('en'); // 'en' or 'zh'
+    const [selectedStudentId, setSelectedStudentId] = useState(studentId || '');
     const [realStats, setRealStats] = useState({});
 
     // 1. SECURITY FILTER: Only show the child if studentId is provided (Portal View)
@@ -210,8 +211,12 @@ export default function ReportsPage({ activeClass, studentId, isParentView, onBa
             // Filter to only the student matching the parent access code
             return activeClass.students.filter(s => s.id.toString() === studentId.toString());
         }
+        // For class view, use selected student if available
+        if (selectedStudentId) {
+            return activeClass.students.filter(s => s.id.toString() === selectedStudentId.toString());
+        }
         return activeClass.students;
-    }, [activeClass, studentId]);
+    }, [activeClass, studentId, selectedStudentId]);
 
     // Fetch real behavior data from student history
     useEffect(() => {
@@ -377,7 +382,9 @@ export default function ReportsPage({ activeClass, studentId, isParentView, onBa
                     </button>
                     
                     <h1 style={styles.mainTitle}>
-                        {t.mainTitle(isParentView, activeClass?.name)}
+                        {selectedStudentId && !isParentView 
+                            ? `${activeClass?.students?.find(s => s.id === selectedStudentId)?.name || ''} - ${t.mainTitle(isParentView, activeClass?.name)}` 
+                            : t.mainTitle(isParentView, activeClass?.name)}
                     </h1>
                     
                     {/* Language Selector */}
@@ -403,20 +410,38 @@ export default function ReportsPage({ activeClass, studentId, isParentView, onBa
                     </div>
                 </div>
                 
-                {/* Time Period Toggles - moved to top right */}
-                <div style={styles.filterBar}>
-                    {['week', 'month', 'year'].map((p) => (
-                        <button
-                            key={p}
-                            onClick={() => setTimePeriod(p)}
-                            style={{
-                                ...styles.periodBtn,
-                                ...(timePeriod === p ? styles.periodBtnActive : {})
-                            }}
+                <div style={styles.rightControls}>
+                    {/* Student Selection Dropdown */}
+                    {!studentId && activeClass && activeClass.students && activeClass.students.length > 1 && (
+                        <select
+                            value={selectedStudentId}
+                            onChange={(e) => setSelectedStudentId(e.target.value)}
+                            style={styles.studentSelect}
                         >
-                            {t[p]}
-                        </button>
-                    ))}
+                            <option value="">All Students</option>
+                            {activeClass.students.map((student) => (
+                                <option key={student.id} value={student.id}>
+                                    {student.name}
+                                </option>
+                            ))}
+                        </select>
+                    )}
+                    
+                    {/* Time Period Toggles */}
+                    <div style={styles.filterBar}>
+                        {['week', 'month', 'year'].map((p) => (
+                            <button
+                                key={p}
+                                onClick={() => setTimePeriod(p)}
+                                style={{
+                                    ...styles.periodBtn,
+                                    ...(timePeriod === p ? styles.periodBtnActive : {})
+                                }}
+                            >
+                                {t[p]}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
 
@@ -538,6 +563,18 @@ const styles = {
     langSelector: { display: 'flex', background: '#f5f5f7', padding: '4px', borderRadius: '12px' },
     langBtn: { padding: '8px 16px', border: 'none', background: 'transparent', cursor: 'pointer', borderRadius: '8px', fontWeight: '700', color: '#888' },
     langBtnActive: { background: '#fff', color: '#4CAF50', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' },
+    rightControls: { display: 'flex', gap: '10px', alignItems: 'center' },
+    studentSelect: { 
+        padding: '8px 12px', 
+        border: '1px solid #e0e0e0', 
+        borderRadius: '8px', 
+        fontSize: '14px',
+        fontWeight: '600',
+        color: '#333',
+        background: '#fff',
+        cursor: 'pointer',
+        minWidth: '150px'
+    },
     filterBar: { display: 'flex', background: '#f5f5f7', padding: '4px', borderRadius: '12px' },
     periodBtn: { padding: '8px 16px', border: 'none', background: 'transparent', cursor: 'pointer', borderRadius: '8px', fontWeight: '700', color: '#888' },
     periodBtnActive: { background: '#fff', color: '#4CAF50', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' },
