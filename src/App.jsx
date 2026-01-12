@@ -73,7 +73,6 @@ function App() {
   // 1. Add state to track if we are in the assignment studio
   const [isAssignmentStudioOpen, setIsAssignmentStudioOpen] = useState(false);
 
-
   const [showGuide, setShowGuide] = useState(false);
 
   const saveTimeoutRef = useRef(null);
@@ -237,7 +236,12 @@ function App() {
         activeClass={activeClass}
         onBack={() => setIsAssignmentStudioOpen(false)}
         onPublish={(assignmentData) => {
-          const newAsn = { ...assignmentData, id: Date.now() };
+          const newAsn = { 
+            ...assignmentData, 
+            id: Date.now(),
+            assignedTo: assignmentData.assignedTo || 'all',  // Store who it's assigned to
+            assignedToAll: assignmentData.assignedToAll !== undefined ? assignmentData.assignedToAll : true  // Default to all
+          };
 
           setClasses(prevClasses => {
             const newClasses = prevClasses.map(c => {
@@ -261,6 +265,7 @@ function App() {
           // Simulate a notification to students that a new assignment is available
           // This would trigger updates in the student portals
           console.log("Assignment published successfully:", newAsn.title);
+          console.log("Assigned to:", newAsn.assignedTo, "Assigned to all:", newAsn.assignedToAll);
 
           setIsAssignmentStudioOpen(false);
         }}
