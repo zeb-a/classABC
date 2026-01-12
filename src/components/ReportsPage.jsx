@@ -165,7 +165,7 @@ function generateTeacherNote(student, behavior, period, language = 'en') {
 
 /* ================= 📊 MAIN COMPONENT ================= */
 
-export default function ReportsPage({ activeClass, studentId, isParentView }) {
+export default function ReportsPage({ activeClass, studentId, isParentView, onBack }) {
     const [timePeriod, setTimePeriod] = useState('week'); // 'week', 'month', 'year'
     const [language, setLanguage] = useState('en'); // 'en' or 'zh'
 
@@ -187,12 +187,49 @@ export default function ReportsPage({ activeClass, studentId, isParentView }) {
         };
     };
 
+    // 3. MOCK DAILY BEHAVIOR DATA AGGREGATION FUNCTION
+    const getDailyBehaviorData = (student) => {
+        // This would come from actual data in a real implementation
+        // For now, generating mock data that sums all behavior types per day
+        // Simulating data that might come from a history collection
+        const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+        
+        // Generate data based on student's actual behavior data if available
+        // For demo purposes, we'll create different values for each student
+        const baseValue = student.score || 10;
+        const data = daysOfWeek.map((day, index) => {
+            // Vary the data based on day and student ID to make it look realistic
+            const dayFactor = (index + 1) * 2;
+            const studentFactor = parseInt(student.id) % 5;
+            return Math.max(1, Math.floor(baseValue + dayFactor + studentFactor + (Math.random() * 5)));
+        });
+        
+        return {
+            labels: daysOfWeek,
+            datasets: [{
+                label: 'Total Points',
+                data: data,
+                backgroundColor: '#4CAF50',
+                borderRadius: 8
+            }]
+        };
+    };
+
     const t = translations[language]; // shorthand for translations
 
     return (
         <div style={styles.container}>
             <div style={styles.header}>
                 <div style={styles.headerLeft}>
+                    {/* Go Back Button */}
+                    <button 
+                        onClick={onBack || (() => window.history.back())}
+                        style={styles.goBackBtn}
+                        aria-label="Go back"
+                    >
+                        ← Back
+                    </button>
+                    
                     <h1 style={styles.mainTitle}>
                         {t.mainTitle(isParentView, activeClass?.name)}
                     </h1>
@@ -282,16 +319,20 @@ export default function ReportsPage({ activeClass, studentId, isParentView }) {
                                     <h4 style={styles.chartTitle}>{t.behaviorDistribution}</h4>
                                     <div style={{ height: '200px' }}>
                                         <Bar 
-                                            data={{
-                                                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
-                                                datasets: [{
-                                                    label: t.positive,
-                                                    data: [4, 7, 3, 9, 5],
-                                                    backgroundColor: '#4CAF50',
-                                                    borderRadius: 8
-                                                }]
+                                            data={getDailyBehaviorData(student)}
+                                            options={{ 
+                                                maintainAspectRatio: false, 
+                                                plugins: { 
+                                                    legend: { display: true },
+                                                    tooltip: {
+                                                        callbacks: {
+                                                            label: function(context) {
+                                                                return `${context.dataset.label}: ${context.parsed.y} points`;
+                                                            }
+                                                        }
+                                                    }
+                                                }
                                             }}
-                                            options={{ maintainAspectRatio: false, plugins: { legend: { display: false } } }}
                                         />
                                     </div>
                                 </div>
@@ -300,8 +341,33 @@ export default function ReportsPage({ activeClass, studentId, isParentView }) {
                                     <h4 style={styles.chartTitle}>{t.ratio}</h4>
                                     <div style={{ height: '140px' }}>
                                         <Doughnut 
-                                            data={doughnutData}
-                                            options={{ maintainAspectRatio: false, cutout: '70%' }}
+                                            data={{
+                                                labels: [t.positive, t.needsWork],
+                                                datasets: [{
+                                                    data: [
+                                                        Math.max(0, stats.positive.total || 0), 
+                                                        Math.max(0, Math.abs(stats.negative.total || 0))
+                                                    ],
+                                                    backgroundColor: ['#4CAF50', '#FF5252'],
+                                                    borderWidth: 0,
+                                                }]
+                                            }}
+                                            options={{ 
+                                                maintainAspectRatio: false, 
+                                                cutout: '70%',
+                                                plugins: {
+                                                    legend: {
+                                                        position: 'bottom',
+                                                        labels: {
+                                                            boxWidth: 12,
+                                                            padding: 10,
+                                                            font: {
+                                                                size: 10
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }}
                                         />
                                     </div>
                                 </div>
@@ -318,6 +384,17 @@ const styles = {
     container: { padding: '40px', background: '#fff', minHeight: '100vh' },
     header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', borderBottom: '1px solid #f0f0f0', paddingBottom: '20px' },
     headerLeft: { display: 'flex', flexDirection: 'column', gap: '10px' },
+    goBackBtn: { 
+        padding: '8px 16px', 
+        border: '1px solid #e0e0e0', 
+        background: '#fff', 
+        cursor: 'pointer', 
+        borderRadius: '8px', 
+        fontWeight: '600', 
+        color: '#666',
+        fontSize: '14px',
+        transition: 'all 0.2s ease'
+    },
     mainTitle: { fontSize: '24px', fontWeight: '900', color: '#1a1a1a', margin: 0 },
     langSelector: { display: 'flex', background: '#f5f5f7', padding: '4px', borderRadius: '12px' },
     langBtn: { padding: '8px 16px', border: 'none', background: 'transparent', cursor: 'pointer', borderRadius: '8px', fontWeight: '700', color: '#888' },

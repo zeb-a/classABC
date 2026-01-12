@@ -1,47 +1,60 @@
-```
-# Compiled and build artifacts
-*.pyc
-__pycache__/
-*.o
-*.obj
+```gitignore
+# Dependencies
+node_modules/
+.julia/
+zig*/
+target/
+
+# Build artifacts
 dist/
 build/
-*.class
+*.o
+*.obj
 *.exe
 *.dll
 *.so
 *.a
 *.out
 
-# Dependencies
-.venv/
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
 venv/
-node_modules/
-.mypy_cache/
-.pytest_cache/
-target/
-.gradle/
-
-# Logs and temp files
+.venv/
+.venv.bak/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
 *.log
 *.tmp
 *.swp
 *.swo
+.DS_Store
+Thumbs.db
 
-# Environment
+# Logs
+*.log
+
+# Environment variables
 .env
 .env.local
 .env.*
 
-# Editors
+# Editor files
 .vscode/
 .idea/
 *.swp
 *.swo
-
-# System files
-.DS_Store
-Thumbs.db
 
 # Coverage
 coverage/
@@ -71,4 +84,278 @@ htmlcov/
 *.tar.bz2
 *.tar.xz
 *.tar.zst
+
+# MyPy
+.mypy_cache/
+__pycache__/
+
+# PyTest
+.pytest_cache/
+
+# Gradle
+.gradle/
+
+# Rust/Cargo
+Cargo.lock
+target/
+
+# Go
+*.out
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+*.hprof
+hs_err_pid*
+
+# C/C++
+*.a
+*.lib
+*.obj
+*.o
+*.so
+*.dylib
+*.dll
+*.exe
+
+# Node.js
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+node_modules/
+
+# Bower
+bower_components/
+
+# Jspm
+jspm_packages/
+
+# Webpack
+webpack-stats.json
+
+# SASS
+.sass-cache
+
+# Temporary folders
+tmp/
+temp/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Testing
+.ruby-version
+.bundle
+.plt
+
+# IDE
+*.swp
+*.swo
+*~
+
+# CI
+.semaphore
+.circleci
+
+# Database
+*.db
+*.db-journal
+
+# Backup files
+*~
+*.bak
+*.orig
+*.rej
+
+# Local configuration
+config/local.*
+!config/local.example.*
+
+# Secrets
+secrets/
+.secret*
+
+# Snapshots
+*.snap
+
+# Reports
+reports/
+coverage/
+
+# Distribution / packaging
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# PEP 582
+__pypackages__/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# Sphinx
+docs/_build/
+
+# PyBuilder
+.pybuilder/
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# PEP 582
+__pypackages__/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre
+.pyre/
+
+# pytype
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# PyCharm
+.idea/
+
+# Visual Studio Code
+.vscode/
+
+# Visual Studio
+.vs/
+*.VC.db
+*.VC.VC.opendb
+
+# JetBrains
+*.iml
+*.iws
+*.ipr
+out/
+
+# NetBeans
+nbproject/private/
+nbproject/project.properties
+
+# Eclipse
+.metadata
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.settings/
+.loadpath
+.recommenders
+
+# IntelliJ IDEA
+*.iws
+*.iml
+*.ipr
+.idea/
+
+# App Engine
+.appspot/
+.appspot/
+lib/
+
+# Elixir & Phoenix
+erl_crash.dump
+
+# Visual Studio Code
+.vscode/
+
+# Vim
+*.un~
+Session.vim
+.netrwhist
+*~
+#*
+.\#*
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+#*#
+
+# Spacemacs
+.spacemacs
+.spacemacs.d
+
+# General
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 ```
