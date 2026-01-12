@@ -368,9 +368,114 @@ export default function ReportsPage({ activeClass, studentId, isParentView, onBa
 
     const t = translations[language]; // shorthand for translations
 
+    const handlePrint = () => {
+        window.print();
+    };
+
+    const scrollToTop = () => {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    };
+
     return (
-        <div style={styles.container}>
-            <div style={styles.header}>
+        <div style={styles.container} className="reports-page-container">
+            {/* Add responsive styles via style tag */}
+            <style>
+                {`
+                    @media (max-width: 768px) {
+                        .reports-page-container {
+                            padding: 20px;
+                        }
+                        
+                        .reports-page-header {
+                            flex-direction: column;
+                            align-items: stretch;
+                        }
+                        
+                        .reports-page-right-controls {
+                            flex-direction: column;
+                            align-items: stretch;
+                        }
+                        
+                        .reports-page-student-select {
+                            width: 100%;
+                        }
+                        
+                        .reports-page-bento-grid {
+                            flex-direction: column;
+                        }
+                        
+                        .reports-page-grid-item-large,
+                        .reports-page-grid-item-small {
+                            width: 100%;
+                        }
+                        
+                        .reports-page-floating-print-button {
+                            bottom: 120px;
+                            left: 15px;
+                            width: 45px;
+                            height: 45px;
+                            font-size: 20px;
+                        }
+                        
+                        .reports-page-floating-top-button {
+                            bottom: 20px;
+                            left: 15px;
+                            width: 45px;
+                            height: 45px;
+                            font-size: 18px;
+                        }
+                    }
+
+                    @media (max-width: 480px) {
+                        .reports-page-container {
+                            padding: 15px;
+                        }
+                        
+                        .reports-page-main-title {
+                            font-size: 20px;
+                        }
+                        
+                        .reports-page-report-card {
+                            padding: 15px;
+                        }
+                        
+                        .reports-page-avatar-circle {
+                            width: 40px;
+                            height: 40px;
+                            font-size: 16px;
+                        }
+                        
+                        .reports-page-s-name {
+                            font-size: 18px;
+                        }
+                        
+                        .reports-page-big-score {
+                            font-size: 24px;
+                        }
+                        
+                        .reports-page-floating-print-button {
+                            bottom: 110px;
+                            left: 10px;
+                            width: 40px;
+                            height: 40px;
+                            font-size: 18px;
+                        }
+                        
+                        .reports-page-floating-top-button {
+                            bottom: 15px;
+                            left: 10px;
+                            width: 40px;
+                            height: 40px;
+                            font-size: 16px;
+                        }
+                    }
+                `}
+            </style>
+            
+            <div style={styles.header} className="reports-page-header">
                 <div style={styles.headerLeft}>
                     {/* Go Back Button */}
                     <button 
@@ -381,7 +486,7 @@ export default function ReportsPage({ activeClass, studentId, isParentView, onBa
                         ← Back
                     </button>
                     
-                    <h1 style={styles.mainTitle}>
+                    <h1 style={styles.mainTitle} className="reports-page-main-title">
                         {selectedStudentId && !isParentView 
                             ? `${activeClass?.students?.find(s => s.id === selectedStudentId)?.name || ''} - ${t.mainTitle(isParentView, activeClass?.name)}` 
                             : t.mainTitle(isParentView, activeClass?.name)}
@@ -410,13 +515,14 @@ export default function ReportsPage({ activeClass, studentId, isParentView, onBa
                     </div>
                 </div>
                 
-                <div style={styles.rightControls}>
+                <div style={styles.rightControls} className="reports-page-right-controls">
                     {/* Student Selection Dropdown */}
                     {!studentId && activeClass && activeClass.students && activeClass.students.length > 1 && (
                         <select
                             value={selectedStudentId}
                             onChange={(e) => setSelectedStudentId(e.target.value)}
                             style={styles.studentSelect}
+                            className="reports-page-student-select"
                         >
                             <option value="">All Students</option>
                             {activeClass.students.map((student) => (
@@ -445,8 +551,30 @@ export default function ReportsPage({ activeClass, studentId, isParentView, onBa
                 </div>
             </div>
 
+            {/* Floating Print Icon */}
+            <button 
+                onClick={handlePrint}
+                style={styles.floatingPrintButton}
+                className="reports-page-floating-print-button"
+                title="Print Report"
+                aria-label="Print Report"
+            >
+                🖨️
+            </button>
+
+            {/* Floating Go to Top Icon */}
+            <button 
+                onClick={scrollToTop}
+                style={styles.floatingTopButton}
+                className="reports-page-floating-top-button"
+                title="Go to Top"
+                aria-label="Go to Top"
+            >
+                ↑
+            </button>
+
             {displayStudents.length === 0 ? (
-                <div style={styles.emptyState}>{t.emptyState}</div>
+                <div style={styles.emptyState} className="reports-page-empty-state">{t.emptyState}</div>
             ) : (
                 displayStudents.map(student => {
                     const stats = getStudentStats(student);
@@ -466,31 +594,31 @@ export default function ReportsPage({ activeClass, studentId, isParentView, onBa
                     };
 
                     return (
-                        <div key={student.id} style={styles.reportCard}>
-                            <div style={styles.cardTop}>
-                                <div style={styles.studentMeta}>
-                                    <div style={styles.avatarCircle}>{student.name.charAt(0)}</div>
+                        <div key={student.id} style={styles.reportCard} className="reports-page-report-card">
+                            <div style={styles.cardTop} className="reports-page-card-top">
+                                <div style={styles.studentMeta} className="reports-page-student-meta">
+                                    <div style={styles.avatarCircle} className="reports-page-avatar-circle">{student.name.charAt(0)}</div>
                                     <div>
-                                        <h2 style={styles.sName}>{student.name}</h2>
-                                        <div style={styles.idTag}>ID: {student.id}</div>
+                                        <h2 style={styles.sName} className="reports-page-s-name">{student.name}</h2>
+                                        <div style={styles.idTag} className="reports-page-id-tag">ID: {student.id}</div>
                                     </div>
                                 </div>
-                                <div style={styles.scoreBox}>
-                                    <div style={styles.bigScore}>{student.score || 0}</div>
-                                    <div style={styles.scoreLabel}>{t.totalPoints}</div>
+                                <div style={styles.scoreBox} className="reports-page-score-box">
+                                    <div style={styles.bigScore} className="reports-page-big-score">{student.score || 0}</div>
+                                    <div style={styles.scoreLabel} className="reports-page-score-label">{t.totalPoints}</div>
                                 </div>
                             </div>
 
                             {/* TEACHER FEEDBACK BOX */}
-                            <div style={styles.aiInsightSection}>
-                                <div style={styles.aiPulse} />
-                                <p style={styles.aiText}><strong>{t.aiSummary}</strong> {teacherNote}</p>
+                            <div style={styles.aiInsightSection} className="reports-page-ai-insight-section">
+                                <div style={styles.aiPulse} className="reports-page-ai-pulse" />
+                                <p style={styles.aiText} className="reports-page-ai-text"><strong>{t.aiSummary}</strong> {teacherNote}</p>
                             </div>
 
                             {/* BENTO GRID FOR CHARTS */}
-                            <div style={styles.bentoGrid}>
-                                <div style={styles.gridItemLarge}>
-                                    <h4 style={styles.chartTitle}>{t.behaviorDistribution}</h4>
+                            <div style={styles.bentoGrid} className="reports-page-bento-grid">
+                                <div style={styles.gridItemLarge} className="reports-page-grid-item-large">
+                                    <h4 style={styles.chartTitle} className="reports-page-chart-title">{t.behaviorDistribution}</h4>
                                     <div style={{ height: '200px' }}>
                                         <Bar 
                                             data={getDailyBehaviorData(student)}
@@ -511,8 +639,8 @@ export default function ReportsPage({ activeClass, studentId, isParentView, onBa
                                     </div>
                                 </div>
 
-                                <div style={styles.gridItemSmall}>
-                                    <h4 style={styles.chartTitle}>{t.ratio}</h4>
+                                <div style={styles.gridItemSmall} className="reports-page-grid-item-small">
+                                    <h4 style={styles.chartTitle} className="reports-page-chart-title">{t.ratio}</h4>
                                     <div style={{ height: '140px' }}>
                                         <Doughnut 
                                             data={doughnutData}
@@ -545,9 +673,22 @@ export default function ReportsPage({ activeClass, studentId, isParentView, onBa
 }
 
 const styles = {
-    container: { padding: '40px', background: '#fff', minHeight: '100vh' },
-    header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', borderBottom: '1px solid #f0f0f0', paddingBottom: '20px' },
+    container: { 
+        padding: '40px', 
+        background: '#fff', 
+        minHeight: '100vh',
+        position: 'relative'
+    },
+    header: { 
+        display: 'flex', 
+        flexDirection: 'column',
+        gap: '15px',
+        marginBottom: '30px', 
+        borderBottom: '1px solid #f0f0f0', 
+        paddingBottom: '20px' 
+    },
     headerLeft: { display: 'flex', flexDirection: 'column', gap: '10px' },
+    headerRight: { display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'flex-end' },
     goBackBtn: { 
         padding: '8px 16px', 
         border: '1px solid #e0e0e0', 
@@ -563,7 +704,13 @@ const styles = {
     langSelector: { display: 'flex', background: '#f5f5f7', padding: '4px', borderRadius: '12px' },
     langBtn: { padding: '8px 16px', border: 'none', background: 'transparent', cursor: 'pointer', borderRadius: '8px', fontWeight: '700', color: '#888' },
     langBtnActive: { background: '#fff', color: '#4CAF50', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' },
-    rightControls: { display: 'flex', gap: '10px', alignItems: 'center' },
+    rightControls: { 
+        display: 'flex', 
+        gap: '10px', 
+        alignItems: 'center',
+        flexDirection: 'column',
+        width: '100%'
+    },
     studentSelect: { 
         padding: '8px 12px', 
         border: '1px solid #e0e0e0', 
@@ -573,13 +720,38 @@ const styles = {
         color: '#333',
         background: '#fff',
         cursor: 'pointer',
-        minWidth: '150px'
+        width: '100%',
+        minWidth: 'auto'
     },
-    filterBar: { display: 'flex', background: '#f5f5f7', padding: '4px', borderRadius: '12px' },
-    periodBtn: { padding: '8px 16px', border: 'none', background: 'transparent', cursor: 'pointer', borderRadius: '8px', fontWeight: '700', color: '#888' },
+    filterBar: { display: 'flex', background: '#f5f5f7', padding: '4px', borderRadius: '12px', width: '100%' },
+    periodBtn: { 
+        padding: '8px 16px', 
+        border: 'none', 
+        background: 'transparent', 
+        cursor: 'pointer', 
+        borderRadius: '8px', 
+        fontWeight: '700', 
+        color: '#888',
+        flex: 1,
+        textAlign: 'center'
+    },
     periodBtnActive: { background: '#fff', color: '#4CAF50', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' },
-    reportCard: { background: '#fff', borderRadius: '24px', border: '1px solid #eee', padding: '30px', marginBottom: '40px', boxShadow: '0 10px 30px rgba(0,0,0,0.02)' },
-    cardTop: { display: 'flex', justifyContent: 'space-between', marginBottom: '25px' },
+    reportCard: { 
+        background: '#fff', 
+        borderRadius: '24px', 
+        border: '1px solid #eee', 
+        padding: '20px', 
+        marginBottom: '30px', 
+        boxShadow: '0 10px 30px rgba(0,0,0,0.02)',
+        width: '100%'
+    },
+    cardTop: { 
+        display: 'flex', 
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        gap: '15px',
+        marginBottom: '25px' 
+    },
     studentMeta: { display: 'flex', alignItems: 'center', gap: '15px' },
     avatarCircle: { width: '50px', height: '50px', background: '#4CAF50', color: '#fff', borderRadius: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: 'bold' },
     sName: { margin: 0, fontSize: '20px', fontWeight: '800' },
@@ -590,9 +762,66 @@ const styles = {
     aiInsightSection: { background: '#F8F9FA', padding: '20px', borderRadius: '18px', border: '1px solid #EDF2F7', marginBottom: '25px', position: 'relative' },
     aiText: { fontSize: '15px', lineHeight: '1.6', color: '#4A5568', margin: 0 },
     aiPulse: { position: 'absolute', top: '15px', right: '15px', width: '8px', height: '8px', background: '#6366f1', borderRadius: '50%', boxShadow: '0 0 10px #6366f1' },
-    bentoGrid: { display: 'flex', gap: '20px' },
-    gridItemLarge: { flex: 2, background: '#fcfcfc', padding: '20px', borderRadius: '24px', border: '1px solid #f0f0f0' },
-    gridItemSmall: { flex: 1, background: '#fcfcfc', padding: '20px', borderRadius: '24px', border: '1px solid #f0f0f0', textAlign: 'center' },
+    bentoGrid: { 
+        display: 'flex', 
+        flexDirection: 'column',
+        gap: '20px' 
+    },
+    gridItemLarge: { 
+        flex: 'none',
+        background: '#fcfcfc', 
+        padding: '15px', 
+        borderRadius: '24px', 
+        border: '1px solid #f0f0f0',
+        width: '100%'
+    },
+    gridItemSmall: { 
+        flex: 'none',
+        background: '#fcfcfc', 
+        padding: '15px', 
+        borderRadius: '24px', 
+        border: '1px solid #f0f0f0', 
+        textAlign: 'center',
+        width: '100%'
+    },
     chartTitle: { fontSize: '14px', fontWeight: 'bold', marginBottom: '15px', color: '#444' },
-    emptyState: { textAlign: 'center', padding: '50px', color: '#ccc' }
+    emptyState: { textAlign: 'center', padding: '50px', color: '#ccc' },
+    floatingPrintButton: {
+        position: 'fixed',
+        bottom: '100px',
+        left: '20px',
+        width: '50px',
+        height: '50px',
+        borderRadius: '50%',
+        backgroundColor: '#4CAF50',
+        color: 'white',
+        border: 'none',
+        fontSize: '24px',
+        cursor: 'pointer',
+        zIndex: 1000,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+        transition: 'all 0.3s ease',
+    },
+    floatingTopButton: {
+        position: 'fixed',
+        bottom: '30px',
+        left: '20px',
+        width: '50px',
+        height: '50px',
+        borderRadius: '50%',
+        backgroundColor: '#2196F3',
+        color: 'white',
+        border: 'none',
+        fontSize: '20px',
+        cursor: 'pointer',
+        zIndex: 1000,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+        transition: 'all 0.3s ease',
+    }
 };
