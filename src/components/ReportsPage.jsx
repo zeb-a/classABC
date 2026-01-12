@@ -36,78 +36,131 @@ const translations = {
     }
 };
 
-/* ================= 🧠 TEACHER-LIKE TEXT GENERATION ================= */
+/* ================= 🧠 ADVANCED TEACHER-LIKE TEXT GENERATION ================= */
 
-function classifyPerformance(behavior) {
-    const pos = behavior.positive.total;
-    const neg = behavior.negative.total;
-    if (pos >= 30 && neg <= 5) return 'STRONG';
-    if (pos >= 15 && neg <= pos * 0.6) return 'MIXED';
-    return 'CONCERN';
+// Check if student has participated (has points)
+function hasParticipated(behavior) {
+    return behavior.positive.total > 0 || behavior.negative.total < 0;
 }
 
-function topItems(obj, count) {
-    return Object.entries(obj)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, count)
-        .map(([k, v]) => `${k} (${v} points)`)
-        .join(', ');
+// Analyze behavior patterns in depth
+function analyzeBehaviorPattern(behavior) {
+    const analysis = {
+        positiveDominant: behavior.positive.total > Math.abs(behavior.negative.total),
+        balanced: Math.abs(behavior.positive.total - Math.abs(behavior.negative.total)) <= 5,
+        concerning: behavior.negative.total < 0 && Math.abs(behavior.negative.total) > behavior.positive.total,
+        highlyActive: behavior.positive.total + Math.abs(behavior.negative.total) > 20,
+        consistent: behavior.positive.total > 10 && behavior.negative.total === 0,
+        improving: behavior.positive.total > 0 && behavior.negative.total === 0 && behavior.positive.total < 10
+    };
+    
+    return analysis;
+}
+
+// Generate descriptive feedback based on behavior categories
+function describeBehaviors(behavior, count = 2) {
+    const allBehaviors = [];
+    
+    // Add positive behaviors
+    Object.entries(behavior.positive.byCard || {}).forEach(([card, points]) => {
+        if (points > 0) {
+            allBehaviors.push({type: 'positive', card, points});
+        }
+    });
+    
+    // Add negative behaviors
+    Object.entries(behavior.negative.byCard || {}).forEach(([card, points]) => {
+        if (points > 0) {
+            allBehaviors.push({type: 'negative', card, points});
+        }
+    });
+    
+    // Sort by points (descending)
+    allBehaviors.sort((a, b) => b.points - a.points);
+    
+    // Return top behaviors with context
+    return allBehaviors.slice(0, count).map(item => {
+        if (item.type === 'positive') {
+            if (item.points >= 10) return `${item.card} (excellent performance with ${item.points} points)`;
+            else if (item.points >= 5) return `${item.card} (strong showing with ${item.points} points)`;
+            else return `${item.card} (positive contribution with ${item.points} points)`;
+        } else {
+            if (item.points >= 10) return `${item.card} (needs attention, ${item.points} points deducted)`;
+            else if (item.points >= 5) return `${item.card} (some issues, ${item.points} points deducted)`;
+            else return `${item.card} (minor issues, ${item.points} points deducted)`;
+        }
+    }).join(', ');
 }
 
 function generateTeacherNote(student, behavior, period, language = 'en') {
-    const level = classifyPerformance(behavior);
-    const posList = topItems(behavior.positive.byCard, 2);
-    const negList = topItems(behavior.negative.byCard, 1);
-    const timeFrame = period === 'week' ? 'this past week' : (period === 'month' ? 'the last month' : 'this year');
-    
-    // English templates - realistic teacher feedback
-    const enTemplates = {
-        STRONG: [
-            `${student.name} has demonstrated exceptional effort and leadership qualities ${timeFrame}. Their consistent positive contributions to ${posList || 'class activities'} have been truly impressive. Keep up the excellent work!`,
-            `${student.name} continues to be a role model for their peers. Their dedication to ${posList || 'positive classroom behavior'} is commendable and reflects strong character development.`,
-            `I'm delighted to share that ${student.name} has excelled in ${posList || 'multiple areas of classroom participation'}. Their growth mindset and enthusiasm are evident in everything they do.`
-        ],
-        MIXED: [
-            `${student.name} is showing promise and making progress ${timeFrame}. While they demonstrate strength in ${posList || 'certain areas'}, there are opportunities to build consistency across all aspects of their learning.`,
-            `${student.name} has had moments of great achievement in ${posList || 'various subjects'}, though they would benefit from focusing on developing stronger habits in other areas.`,
-            `${student.name} is on a positive trajectory. With continued effort in ${negList || 'targeted areas'}, I anticipate seeing even greater improvements ahead.`
-        ],
-        CONCERN: [
-            `${student.name} requires additional support ${timeFrame}. I encourage focusing on positive interactions like ${posList || 'helping classmates'} and maintaining better focus during instruction.`,
-            `${student.name} is facing some challenges that we're actively addressing together. Encouraging ${posList || 'positive peer relationships'} will be important for their continued growth.`,
-            `While ${student.name} shows potential, they need to develop stronger self-regulation skills. We're working closely with them to address ${negList || 'behavioral concerns'} constructively.`
-        ]
-    };
-    
-    // Chinese templates - realistic teacher feedback
-    const zhTemplates = {
-        STRONG: [
-            `${student.name}在${timeFrame}展现了卓越的努力和领导才能。他们在${posList || '课堂活动'}中的持续积极贡献令人印象深刻。请继续保持出色的表现！`,
-            `${student.name}继续成为同龄人的榜样。他们对${posList || '课堂积极行为'}的投入值得称赞，体现了优秀的品格发展。`,
-            `我很高兴地分享，${student.name}在${posList || '课堂参与的多个方面'}表现出色。他们的成长心态和热情体现在所做的每件事中。`
-        ],
-        MIXED: [
-            `${student.name}正在取得进步并显示出潜力${timeFrame}。虽然他们在${posList || '某些领域'}表现出优势，但在各个方面建立一致性仍有提升空间。`,
-            `${student.name}在${posList || '各个科目'}中有过出色的成就时刻，尽管他们在其他领域受益于培养更强的习惯。`,
-            `${student.name}正处于积极的发展轨道上。通过在${negList || '目标领域'}继续努力，我期待看到更大的进步。`
-        ],
-        CONCERN: [
-            `${student.name}需要额外的支持${timeFrame}。我鼓励他们专注于像${posList || '帮助同学'}这样的积极互动，并在指导期间保持更好的专注力。`,
-            `${student.name}面临一些我们正在共同积极解决的挑战。鼓励${posList || '积极的同伴关系'}对他们持续成长很重要。`,
-            `虽然${student.name}展示了潜力，但他们需要培养更强的自我调节能力。我们正在与他们密切合作，以建设性地解决${negList || '行为问题'}。`
-        ]
-    };
-
-    const templates = language === 'zh' ? zhTemplates : enTemplates;
-    
-    // Select a random template from the appropriate category
-    const templateCategory = templates[level];
-    if (templateCategory && templateCategory.length > 0) {
-        const randomIndex = Math.floor(Math.random() * templateCategory.length);
-        return templateCategory[randomIndex];
+    // Check if student has participated at all
+    if (!hasParticipated(behavior)) {
+        if (language === 'zh') {
+            return `${student.name} 尚未参与任何活动或获得分数。请鼓励孩子积极参与课堂活动，以便更好地了解其发展情况。`;
+        }
+        return `${student.name} has not yet participated in any activities or earned any points. Please encourage your child to engage in class activities so we can better assess their progress.`;
     }
-    
-    return templates['MIXED'][0] || "Student is making satisfactory progress."; // fallback
+
+    const pattern = analyzeBehaviorPattern(behavior);
+    const behaviorDescription = describeBehaviors(behavior, 3);
+    const timeFrame = period === 'week' ? 'this past week' : (period === 'month' ? 'the last month' : 'this year');
+    const timeFrameZh = period === 'week' ? '本周' : (period === 'month' ? '本月' : '本年度');
+
+    // More intelligent, context-aware feedback generation based on actual data
+    let feedback;
+
+    if (pattern.consistent) {
+        // Student with high positive scores and no negatives
+        if (language === 'zh') {
+            feedback = `${student.name}在${timeFrameZh}表现非常出色！在${behaviorDescription}等方面展现了卓越的能力。继续保持这种积极的学习态度！`;
+        } else {
+            feedback = `${student.name} has shown exceptional performance ${timeFrame}! They excelled in ${behaviorDescription}. Keep up this excellent work!`;
+        }
+    } else if (pattern.improving) {
+        // Student with positive scores but low total and no negatives
+        if (language === 'zh') {
+            feedback = `${student.name}在${timeFrameZh}表现积极，特别是在${behaviorDescription}方面。继续保持这种良好的势头！`;
+        } else {
+            feedback = `${student.name} showed positive engagement ${timeFrame}, particularly in ${behaviorDescription}. Keep building on this momentum!`;
+        }
+    } else if (pattern.positiveDominant) {
+        // More positives than negatives
+        if (language === 'zh') {
+            feedback = `${student.name}在${timeFrameZh}整体表现良好，在${behaviorDescription}等方面做得不错。继续加强这些优势，同时注意改善不足之处。`;
+        } else {
+            feedback = `${student.name} showed good overall performance ${timeFrame} with strengths in ${behaviorDescription}. Continue building these strengths while working on areas needing improvement.`;
+        }
+    } else if (pattern.balanced) {
+        // Similar amounts of positive and negative
+        if (language === 'zh') {
+            feedback = `${student.name}在${timeFrameZh}表现较为均衡，在${behaviorDescription}等方面有亮点，但也有需要改进的地方。我们将继续引导学生平衡发展。`;
+        } else {
+            feedback = `${student.name} showed a mixed performance ${timeFrame} with highlights in ${behaviorDescription} but also areas needing improvement. We'll continue guiding balanced development.`;
+        }
+    } else if (pattern.concerning) {
+        // More negatives than positives
+        if (language === 'zh') {
+            feedback = `${student.name}在${timeFrameZh}需要更多关注和支持。在${behaviorDescription}等方面存在挑战，我们正与学生一起努力改善这些问题。`;
+        } else {
+            feedback = `${student.name} needs additional support ${timeFrame}. Challenges appeared in ${behaviorDescription}, and we're working with the student to address these issues.`;
+        }
+    } else if (pattern.highlyActive) {
+        // Very high activity (both positive and negative)
+        if (language === 'zh') {
+            feedback = `${student.name}在${timeFrameZh}参与度很高，活动频繁，涉及${behaviorDescription}等多个方面。我们将帮助学生更好地管理自己的行为，发挥优势。`;
+        } else {
+            feedback = `${student.name} was very active ${timeFrame} across multiple areas including ${behaviorDescription}. We'll help channel this energy positively.`;
+        }
+    } else {
+        // General case
+        if (language === 'zh') {
+            feedback = `${student.name}在${timeFrameZh}的表现反映了${behaviorDescription}等情况。我们将继续观察并支持学生的成长。`;
+        } else {
+            feedback = `${student.name}'s performance ${timeFrame} reflected ${behaviorDescription}. We'll continue monitoring and supporting their growth.`;
+        }
+    }
+
+    return feedback;
 }
 
 /* ================= 📊 MAIN COMPONENT ================= */
@@ -139,33 +192,35 @@ export default function ReportsPage({ activeClass, studentId, isParentView }) {
     return (
         <div style={styles.container}>
             <div style={styles.header}>
-                <h1 style={styles.mainTitle}>
-                    {t.mainTitle(isParentView, activeClass?.name)}
-                </h1>
-                
-                {/* Language Selector */}
-                <div style={styles.langSelector}>
-                    <button
-                        onClick={() => setLanguage('en')}
-                        style={{
-                            ...styles.langBtn,
-                            ...(language === 'en' ? styles.langBtnActive : {})
-                        }}
-                    >
-                        English
-                    </button>
-                    <button
-                        onClick={() => setLanguage('zh')}
-                        style={{
-                            ...styles.langBtn,
-                            ...(language === 'zh' ? styles.langBtnActive : {})
-                        }}
-                    >
-                        中文
-                    </button>
+                <div style={styles.headerLeft}>
+                    <h1 style={styles.mainTitle}>
+                        {t.mainTitle(isParentView, activeClass?.name)}
+                    </h1>
+                    
+                    {/* Language Selector */}
+                    <div style={styles.langSelector}>
+                        <button
+                            onClick={() => setLanguage('en')}
+                            style={{
+                                ...styles.langBtn,
+                                ...(language === 'en' ? styles.langBtnActive : {})
+                            }}
+                        >
+                            English
+                        </button>
+                        <button
+                            onClick={() => setLanguage('zh')}
+                            style={{
+                                ...styles.langBtn,
+                                ...(language === 'zh' ? styles.langBtnActive : {})
+                            }}
+                        >
+                            中文
+                        </button>
+                    </div>
                 </div>
                 
-                {/* Time Period Toggles */}
+                {/* Time Period Toggles - moved to top right */}
                 <div style={styles.filterBar}>
                     {['week', 'month', 'year'].map((p) => (
                         <button
@@ -261,9 +316,10 @@ export default function ReportsPage({ activeClass, studentId, isParentView }) {
 
 const styles = {
     container: { padding: '40px', background: '#fff', minHeight: '100vh' },
-    header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', borderBottom: '1px solid #f0f0f0', paddingBottom: '20px', flexDirection: 'column', gap: '15px', alignItems: 'flex-start' },
+    header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', borderBottom: '1px solid #f0f0f0', paddingBottom: '20px' },
+    headerLeft: { display: 'flex', flexDirection: 'column', gap: '10px' },
     mainTitle: { fontSize: '24px', fontWeight: '900', color: '#1a1a1a', margin: 0 },
-    langSelector: { display: 'flex', background: '#f5f5f7', padding: '4px', borderRadius: '12px', marginBottom: '10px' },
+    langSelector: { display: 'flex', background: '#f5f5f7', padding: '4px', borderRadius: '12px' },
     langBtn: { padding: '8px 16px', border: 'none', background: 'transparent', cursor: 'pointer', borderRadius: '8px', fontWeight: '700', color: '#888' },
     langBtnActive: { background: '#fff', color: '#4CAF50', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' },
     filterBar: { display: 'flex', background: '#f5f5f7', padding: '4px', borderRadius: '12px' },
