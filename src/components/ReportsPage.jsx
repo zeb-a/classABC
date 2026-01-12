@@ -58,7 +58,7 @@ function analyzeBehaviorPattern(behavior) {
 }
 
 // Generate descriptive feedback based on behavior categories
-function describeBehaviors(behavior, count = 2) {
+function describeBehaviors(behavior, count = 2, language = 'en') {
     const allBehaviors = [];
     
     // Add positive behaviors
@@ -81,13 +81,45 @@ function describeBehaviors(behavior, count = 2) {
     // Return top behaviors with context
     return allBehaviors.slice(0, count).map(item => {
         if (item.type === 'positive') {
-            if (item.points >= 10) return `${item.card} (excellent performance with ${item.points} points)`;
-            else if (item.points >= 5) return `${item.card} (strong showing with ${item.points} points)`;
-            else return `${item.card} (positive contribution with ${item.points} points)`;
+            if (language === 'zh') {
+                // Better Chinese translations for positive behaviors
+                const chinesePositives = {
+                    "Great work": "表现出色",
+                    "Homework": "作业完成得好",
+                    "Helping others": "乐于助人",
+                    "Participation": "积极参与",
+                    "Kindness": "善良友善"
+                };
+                
+                const behaviorZh = chinesePositives[item.card] || item.card;
+                if (item.points >= 10) return `${behaviorZh}（表现优异，获得${item.points}分）`;
+                else if (item.points >= 5) return `${behaviorZh}（表现突出，获得${item.points}分）`;
+                else return `${behaviorZh}（积极贡献，获得${item.points}分）`;
+            } else {
+                if (item.points >= 10) return `${item.card} (excellent performance with ${item.points} points)`;
+                else if (item.points >= 5) return `${item.card} (strong showing with ${item.points} points)`;
+                else return `${item.card} (positive contribution with ${item.points} points)`;
+            }
         } else {
-            if (item.points >= 10) return `${item.card} (needs attention, ${item.points} points deducted)`;
-            else if (item.points >= 5) return `${item.card} (some issues, ${item.points} points deducted)`;
-            else return `${item.card} (minor issues, ${item.points} points deducted)`;
+            if (language === 'zh') {
+                // Better Chinese translations for negative behaviors
+                const chineseNegatives = {
+                    "Off-task": "注意力不集中",
+                    "Disrespectful": "不尊重他人",
+                    "Late": "迟到",
+                    "Incomplete work": "作业未完成",
+                    "Disruptive": "扰乱秩序"
+                };
+                
+                const behaviorZh = chineseNegatives[item.card] || item.card;
+                if (item.points >= 10) return `${behaviorZh}（需要关注，扣${item.points}分）`;
+                else if (item.points >= 5) return `${behaviorZh}（存在问题，扣${item.points}分）`;
+                else return `${behaviorZh}（小问题，扣${item.points}分）`;
+            } else {
+                if (item.points >= 10) return `${item.card} (needs attention, ${item.points} points deducted)`;
+                else if (item.points >= 5) return `${item.card} (some issues, ${item.points} points deducted)`;
+                else return `${item.card} (minor issues, ${item.points} points deducted)`;
+            }
         }
     }).join(', ');
 }
@@ -102,7 +134,7 @@ function generateTeacherNote(student, behavior, period, language = 'en') {
     }
 
     const pattern = analyzeBehaviorPattern(behavior);
-    const behaviorDescription = describeBehaviors(behavior, 3);
+    const behaviorDescription = describeBehaviors(behavior, 3, language);
     const timeFrame = period === 'week' ? 'this past week' : (period === 'month' ? 'the last month' : 'this year');
     const timeFrameZh = period === 'week' ? '本周' : (period === 'month' ? '本月' : '本年度');
 
@@ -181,9 +213,37 @@ export default function ReportsPage({ activeClass, studentId, isParentView, onBa
 
     // 2. MOCK DATA AGGREGATION (Link this to your history collection later)
     const getStudentStats = (student) => {
+        // Create more realistic mock data based on student score
+        const basePositive = Math.max(0, student.score || 10);
+        const baseNegative = Math.min(0, -(Math.abs(student.score || 5)));
+        
+        // Define Wow and NoNo card types for better categorization
+        const wowCards = ["Great work", "Homework", "Helping others", "Participation", "Kindness"];
+        const nonoCards = ["Off-task", "Disrespectful", "Late", "Incomplete work", "Disruptive"];
+        
+        // Distribute points among Wow cards
+        const wowPoints = {};
+        wowCards.forEach((card, i) => {
+            wowPoints[card] = Math.max(1, Math.floor(basePositive / wowCards.length) + i);
+        });
+        
+        // Distribute points among NoNo cards
+        const nonoPoints = {};
+        nonoCards.forEach((card, i) => {
+            nonoPoints[card] = Math.max(1, Math.floor(Math.abs(baseNegative) / nonoCards.length) + i);
+        });
+        
         return {
-            positive: { total: Math.max(0, student.score), byCard: { "Participation": 5, "Kindness": 3 } },
-            negative: { total: Math.min(0, student.score), byCard: { "Off-task": 1 } }
+            positive: { 
+                total: basePositive, 
+                byCard: wowPoints,
+                wowCount: Object.keys(wowPoints).length  // Number of different Wow card types
+            },
+            negative: { 
+                total: baseNegative, 
+                byCard: nonoPoints,
+                nonoCount: Object.keys(nonoPoints).length  // Number of different NoNo card types
+            }
         };
     };
 
@@ -281,11 +341,14 @@ export default function ReportsPage({ activeClass, studentId, isParentView, onBa
                     const stats = getStudentStats(student);
                     const teacherNote = generateTeacherNote(student, stats, timePeriod, language);
 
-                    // Chart Data
+                    // Chart Data - Now using actual Wow/NoNo counts
                     const doughnutData = {
-                        labels: [t.positive, t.needsWork],
+                        labels: [
+                            language === 'zh' ? '哇卡' : 'Wow Cards', 
+                            language === 'zh' ? '诺诺卡' : 'NoNo Cards'
+                        ],
                         datasets: [{
-                            data: [stats.positive.total || 1, Math.abs(stats.negative.total)],
+                            data: [stats.positive.wowCount || 0, stats.negative.nonoCount || 0],
                             backgroundColor: ['#4CAF50', '#FF5252'],
                             borderWidth: 0,
                         }]
@@ -341,17 +404,7 @@ export default function ReportsPage({ activeClass, studentId, isParentView, onBa
                                     <h4 style={styles.chartTitle}>{t.ratio}</h4>
                                     <div style={{ height: '140px' }}>
                                         <Doughnut 
-                                            data={{
-                                                labels: [t.positive, t.needsWork],
-                                                datasets: [{
-                                                    data: [
-                                                        Math.max(0, stats.positive.total || 0), 
-                                                        Math.max(0, Math.abs(stats.negative.total || 0))
-                                                    ],
-                                                    backgroundColor: ['#4CAF50', '#FF5252'],
-                                                    borderWidth: 0,
-                                                }]
-                                            }}
+                                            data={doughnutData}
                                             options={{ 
                                                 maintainAspectRatio: false, 
                                                 cutout: '70%',
