@@ -17,7 +17,8 @@ import { boringAvatar, AVATAR_OPTIONS, avatarByCharacter } from '../utils/avatar
 
 
 // --- SUB-COMPONENT: MESSAGES/GRADING VIEW ---
-const MessagesView = ({ activeClass, submissions, onGrade, onClose }) => {
+const MessagesView = ({ activeClass, onGrade, onClose }) => {
+  const submissions = activeClass.student_submissions || [];
   const pending = submissions.filter(s => s.status === 'submitted');
   const graded = submissions.filter(s => s.status === 'graded');
 
@@ -124,8 +125,8 @@ export default function ClassDashboard({
 
   const generate5DigitCode = () => Math.floor(10000 + Math.random() * 90000).toString();
 
-  // Calculate unread messages
-  const submissions = activeClass.submissions || [];
+  // Calculate unread messages - now using student_submissions from PocketBase
+  const submissions = activeClass.student_submissions || [];
   const unreadCount = submissions.filter(s => s.status === 'submitted').length;
 
   useEffect(() => {
@@ -194,7 +195,7 @@ export default function ClassDashboard({
       if (c.id === activeClass.id) {
         return {
           ...c,
-          submissions: [...(c.submissions || []), newSubmission]
+          student_submissions: [...(c.student_submissions || []), newSubmission]
         };
       }
       return c;
@@ -207,40 +208,70 @@ export default function ClassDashboard({
     setGradingModalOpen(true);
   };
 
-  const submitGrade = () => {
+  const submitGrade = async () => {
     if (!currentSubmission) return;
     const points = parseInt(gradeInput) || 0;
 
-    // 1. Give Points to Student
-    updateClasses(prev => prev.map(c =>
-      c.id === activeClass.id ? {
-        ...c,
-        students: c.students.map(s => {
-          if (s.id === currentSubmission.student.id) {
-            return {
-              ...s,
-              score: s.score + points,
-              history: [...(s.history || []), {
-                label: `Assignment: ${currentSubmission.assignment.title}`,
-                pts: points,
-                type: 'assignment',
-                timestamp: new Date().toISOString()
-              }]
-            };
-          }
-          return s;
-        }),
-        // 2. Update Submission Status
-        submissions: c.submissions.map(sub =>
-          sub.id === currentSubmission.submission.id
-            ? { ...sub, status: 'graded', grade: points }
-            : sub
-        )
-      } : c
-    ));
+    try {
+      // Update the class record in PocketBase to update the submission status
+      const classResponse = await fetch(`http://localhost:8090/api/collections/classes/records/${activeClass.id}`);
+      if (!classResponse.ok) throw new Error('Failed to fetch class');
+      const classData = await classResponse.json();
 
-    setGradingModalOpen(false);
-    setCurrentSubmission(null);
+      // Update the submission status in student_submissions
+      let updatedSubmissions = classData.student_submissions || [];
+      updatedSubmissions = updatedSubmissions.map(sub =>
+        sub.id === currentSubmission.submission.id
+          ? { ...sub, status: 'graded', grade: points }
+          : sub
+      );
+
+      // Update the class record with updated submissions
+      const updateResponse = await fetch(`http://localhost:8090/api/collections/classes/records/${activeClass.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          student_submissions: updatedSubmissions
+        })
+      });
+
+      if (!updateResponse.ok) {
+        const errorData = await updateResponse.json();
+        throw new Error(errorData.message || 'Failed to update submission status');
+      }
+
+      // 1. Give Points to Student and update local state
+      updateClasses(prev => prev.map(c =>
+        c.id === activeClass.id ? {
+          ...c,
+          students: c.students.map(s => {
+            if (s.id === currentSubmission.student.id) {
+              return {
+                ...s,
+                score: s.score + points,
+                history: [...(s.history || []), {
+                  label: `Assignment: ${currentSubmission.assignment.title}`,
+                  pts: points,
+                  type: 'assignment',
+                  timestamp: new Date().toISOString()
+                }]
+              };
+            }
+            return s;
+          }),
+          // 2. Update Submission Status in local state too
+          student_submissions: updatedSubmissions
+        } : c
+      ));
+
+      setGradingModalOpen(false);
+      setCurrentSubmission(null);
+    } catch (error) {
+      console.error('Error grading assignment:', error);
+      alert(`Error grading assignment: ${error.message}`);
+    }
   };
 
   // --- EXISTING HANDLERS ---
@@ -430,9 +461,9 @@ export default function ClassDashboard({
               title="Messages & Grading"
 
             />
-            {activeClass.submissions?.filter(s => s.status === 'submitted').length > 0 && (
+            {activeClass.student_submissions?.filter(s => s.status === 'submitted').length > 0 && (
     <span style={styles.badge}>
-      {activeClass.submissions.filter(s => s.status === 'submitted').length}
+      {activeClass.student_submissions.filter(s => s.status === 'submitted').length}
     </span>
   )}
             {unreadCount > 0 && (
@@ -468,7 +499,6 @@ export default function ClassDashboard({
           {viewMode === 'messages' ? (
             <MessagesView
               activeClass={activeClass}
-              submissions={activeClass.submissions || []}
               onGrade={openGradingModal}
               onClose={() => setViewMode('dashboard')}
             />
@@ -493,7 +523,7 @@ export default function ClassDashboard({
                   
                   {/* Assignment Submission Notifications */}
                   <AssignmentSubmissionNotification 
-                    submissions={activeClass.submissions || []} 
+                    submissions={activeClass.student_submissions || []} 
                     onNotificationClick={(notification) => {
                       setViewMode('messages');
                     }}

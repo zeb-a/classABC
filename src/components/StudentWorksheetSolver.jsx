@@ -35,7 +35,7 @@ const StudentWorksheetSolver = ({ worksheet, onClose, studentName, studentId, cl
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const submission = {
       id: Date.now(),
       assignmentId: worksheet.id,
@@ -47,20 +47,63 @@ const StudentWorksheetSolver = ({ worksheet, onClose, studentName, studentId, cl
       status: 'submitted'
     };
 
-    // Update the global classes state in App.jsx
-    const updatedClasses = classes.map(c => {
-      if (c.id === classId) {
-        return {
-          ...c,
-          submissions: [...(c.submissions || []), submission]
-        };
-      }
-      return c;
-    });
+    try {
+      // Update the class record in PocketBase to include the submission
+      const classResponse = await fetch(`http://localhost:8090/api/collections/classes/records/${classId}`);
+      if (!classResponse.ok) throw new Error('Failed to fetch class');
+      const classData = await classResponse.json();
 
-    setClasses(updatedClasses); // This pushes the work to the Teacher's Inbox
-    alert("Worksheet submitted successfully!");
-    onClose();
+      // Get existing submissions or initialize empty array
+      let existingSubmissions = classData.student_submissions || [];
+      
+      // Check if student already submitted this assignment
+      const existingSubmissionIndex = existingSubmissions.findIndex(
+        sub => sub.assignmentId === worksheet.id && sub.studentId === String(studentId)
+      );
+
+      if (existingSubmissionIndex !== -1) {
+        // Update existing submission
+        existingSubmissions[existingSubmissionIndex] = submission;
+      } else {
+        // Add new submission
+        existingSubmissions.push(submission);
+      }
+
+      // Update the class record with new submissions
+      const updateResponse = await fetch(`http://localhost:8090/api/collections/classes/records/${classId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          student_submissions: existingSubmissions
+        })
+      });
+
+      if (!updateResponse.ok) {
+        const errorData = await updateResponse.json();
+        throw new Error(errorData.message || 'Failed to submit assignment');
+      }
+
+      // Update the local state as well for immediate UI feedback
+      const updatedClasses = classes.map(c => {
+        if (c.id === classId) {
+          return {
+            ...c,
+            student_submissions: existingSubmissions
+          };
+        }
+        return c;
+      });
+
+      setClasses(updatedClasses); // This updates the local state
+      
+      alert("Worksheet submitted successfully!");
+      onClose();
+    } catch (error) {
+      console.error('Error submitting assignment:', error);
+      alert(`Error submitting assignment: ${error.message}`);
+    }
   };
 
   const renderQuestionInput = (question) => {
