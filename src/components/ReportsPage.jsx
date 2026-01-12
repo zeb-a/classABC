@@ -57,8 +57,46 @@ function analyzeBehaviorPattern(behavior) {
     return analysis;
 }
 
+// Translation mapping for behavior cards
+const behaviorCardTranslations = {
+    en: {
+        'Participation': 'Participation',
+        'Kindness': 'Kindness',
+        'Leadership': 'Leadership',
+        'Helping': 'Helping Others',
+        'Respect': 'Respect',
+        'Teamwork': 'Teamwork',
+        'Creativity': 'Creativity',
+        'Focus': 'Focus',
+        'Off-task': 'Off-task Behavior',
+        'Disrespect': 'Disrespect',
+        'Disruption': 'Disruption',
+        'Bullying': 'Bullying'
+    },
+    zh: {
+        'Participation': '课堂参与',
+        'Kindness': '友善互助',
+        'Leadership': '领导能力',
+        'Helping': '帮助他人',
+        'Respect': '尊重他人',
+        'Teamwork': '团队合作',
+        'Creativity': '创造力',
+        'Focus': '专注力',
+        'Off-task': '分心行为',
+        'Disrespect': '不尊重行为',
+        'Disruption': '扰乱秩序',
+        'Bullying': '欺凌行为'
+    }
+};
+
+// Get translated card name
+function getTranslatedCardName(card, language) {
+    const langCards = behaviorCardTranslations[language] || behaviorCardTranslations.en;
+    return langCards[card] || card;
+}
+
 // Generate descriptive feedback based on behavior categories
-function describeBehaviors(behavior, count = 2) {
+function describeBehaviors(behavior, count = 2, language = 'en') {
     const allBehaviors = [];
     
     // Add positive behaviors
@@ -80,14 +118,34 @@ function describeBehaviors(behavior, count = 2) {
     
     // Return top behaviors with context
     return allBehaviors.slice(0, count).map(item => {
+        const translatedCard = getTranslatedCardName(item.card, language);
+        
         if (item.type === 'positive') {
-            if (item.points >= 10) return `${item.card} (excellent performance with ${item.points} points)`;
-            else if (item.points >= 5) return `${item.card} (strong showing with ${item.points} points)`;
-            else return `${item.card} (positive contribution with ${item.points} points)`;
+            if (item.points >= 10) {
+                if (language === 'zh') return `${translatedCard}（表现优秀，获得 ${item.points} 分）`;
+                return `${translatedCard} (excellent performance with ${item.points} points)`;
+            }
+            else if (item.points >= 5) {
+                if (language === 'zh') return `${translatedCard}（表现突出，获得 ${item.points} 分）`;
+                return `${translatedCard} (strong showing with ${item.points} points)`;
+            }
+            else {
+                if (language === 'zh') return `${translatedCard}（积极参与，获得 ${item.points} 分）`;
+                return `${translatedCard} (positive contribution with ${item.points} points)`;
+            }
         } else {
-            if (item.points >= 10) return `${item.card} (needs attention, ${item.points} points deducted)`;
-            else if (item.points >= 5) return `${item.card} (some issues, ${item.points} points deducted)`;
-            else return `${item.card} (minor issues, ${item.points} points deducted)`;
+            if (item.points >= 10) {
+                if (language === 'zh') return `${translatedCard}（需要注意，扣除 ${item.points} 分）`;
+                return `${translatedCard} (needs attention, ${item.points} points deducted)`;
+            }
+            else if (item.points >= 5) {
+                if (language === 'zh') return `${translatedCard}（存在问题，扣除 ${item.points} 分）`;
+                return `${translatedCard} (some issues, ${item.points} points deducted)`;
+            }
+            else {
+                if (language === 'zh') return `${translatedCard}（小问题，扣除 ${item.points} 分）`;
+                return `${translatedCard} (minor issues, ${item.points} points deducted)`;
+            }
         }
     }).join(', ');
 }
@@ -102,7 +160,7 @@ function generateTeacherNote(student, behavior, period, language = 'en') {
     }
 
     const pattern = analyzeBehaviorPattern(behavior);
-    const behaviorDescription = describeBehaviors(behavior, 3);
+    const behaviorDescription = describeBehaviors(behavior, 3, language);
     const timeFrame = period === 'week' ? 'this past week' : (period === 'month' ? 'the last month' : 'this year');
     const timeFrameZh = period === 'week' ? '本周' : (period === 'month' ? '本月' : '本年度');
 
