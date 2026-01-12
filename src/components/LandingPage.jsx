@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import api from '../services/api';
 import ReportsPage from './ReportsPage';
+import StudentWorksheetSolver from './StudentWorksheetSolver';
 
 // --- SUB-COMPONENT: ACCESS CODE PORTAL ---
 const AccessCodePortal = ({ type, onBack, classes, setClasses }) => {
@@ -506,97 +507,6 @@ export default function LandingPage({ onLoginSuccess, classes, setClasses }) {
     </div>
   );
 }
-const StudentWorksheetSolver = ({ worksheet, onClose, studentName, studentId, classId, classes, setClasses }) => {
-  const [answers, setAnswers] = useState({});
-
-const handleSubmit = () => {
-  const submission = {
-    id: Date.now(),
-    assignmentId: worksheet.id,
-    assignmentTitle: worksheet.title,
-    studentName: studentName,
-    studentId: String(studentId), // Ensure studentId is string for consistency
-    answers: answers,
-    submittedAt: new Date().toISOString(),
-    status: 'submitted'
-  };
-
-  // Update the global classes state in App.jsx
-  const updatedClasses = classes.map(c => {
-    if (c.id === classId) {
-      return {
-        ...c,
-        submissions: [...(c.submissions || []), submission]
-      };
-    }
-    return c;
-  });
-
-  setClasses(updatedClasses); // This pushes the work to the Teacher's Inbox
-  alert("Worksheet submitted successfully!");
-  onClose();
-};
-
-  return (
-    <div style={{ background: '#fff', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <header style={{ padding: '20px 40px', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <button onClick={onClose} style={{ border: 'none', background: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700 }}>
-          <ChevronLeft size={20} /> Quit
-        </button>
-        <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 900 }}>{worksheet.title}</h2>
-        <button onClick={handleSubmit} style={{ background: '#4F46E5', color: '#fff', border: 'none', padding: '10px 25px', borderRadius: '12px', fontWeight: 700, cursor: 'pointer' }}>
-          Finish & Submit
-        </button>
-      </header>
-
-      <main style={{ flex: 1, overflowY: 'auto', padding: '40px 20px', background: '#F8FAFC' }}>
-        <div style={{ maxWidth: '700px', margin: '0 auto' }}>
-          {worksheet.questions.map((q, idx) => (
-            <div key={q.id} style={{ background: '#fff', borderRadius: '24px', padding: '30px', marginBottom: '25px', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
-              <span style={{ fontSize: '12px', fontWeight: 900, color: '#6366F1', textTransform: 'uppercase' }}>Question {idx + 1}</span>
-              
-              {q.paragraph && (
-                <div style={{ background: '#F1F5F9', padding: '20px', borderRadius: '16px', margin: '15px 0', lineHeight: '1.6', fontSize: '16px' }}>
-                  {q.paragraph}
-                </div>
-              )}
-
-              <h3 style={{ fontSize: '20px', margin: '15px 0' }}>{q.question}</h3>
-              
-              {q.image && <img src={q.image} style={{ width: '100%', borderRadius: '16px', marginBottom: '20px' }} alt="question" />}
-
-              {/* Answer Inputs */}
-              {q.type === 'choice' ? (
-                <div style={{ display: 'grid', gap: '10px' }}>
-                  {q.options.map((opt, oIdx) => (
-                    <button 
-                      key={oIdx}
-                      onClick={() => setAnswers({...answers, [q.id]: opt})}
-                      style={{ 
-                        padding: '15px', borderRadius: '12px', textAlign: 'left', border: '2px solid',
-                        borderColor: answers[q.id] === opt ? '#6366F1' : '#E2E8F0',
-                        background: answers[q.id] === opt ? '#EEF2FF' : '#fff',
-                        fontWeight: 600, cursor: 'pointer'
-                      }}
-                    >
-                      {opt}
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <input 
-                  style={{ width: '100%', padding: '15px', borderRadius: '12px', border: '2px solid #E2E8F0', fontSize: '16px' }}
-                  placeholder="Type your answer here..."
-                  onChange={(e) => setAnswers({...answers, [q.id]: e.target.value})}
-                />
-              )}
-            </div>
-          ))}
-        </div>
-      </main>
-    </div>
-  );
-};
 // --- MODERN 2026 STYLES ---
 const modernStyles = {
   container: { background: '#fff', minHeight: '100vh', fontFamily: "'Inter', sans-serif", color: '#1A1A1A', overflowX: 'hidden' },
