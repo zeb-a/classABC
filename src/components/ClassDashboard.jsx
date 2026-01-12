@@ -3,7 +3,7 @@ import {
   Dices, Trophy, Settings, Home, UserPlus, Camera,
   ChevronLeft, ChevronRight, Sliders, ChevronDown,
   CheckSquare, BarChart2, QrCode, ClipboardList, Inbox,
-  Plus, Send, CheckCircle, X
+  Plus, Send, CheckCircle, X, Bell
 } from 'lucide-react';
 import ReportsPage from './ReportsPage';
 import StudentCard from './StudentCard';
@@ -11,6 +11,7 @@ import BehaviorModal from './BehaviorModal';
 import LuckyDrawModal from './LuckyDrawModal';
 import AddStudentModal from './AddStudentModal';
 import SafeAvatar from './SafeAvatar';
+import AssignmentSubmissionNotification from './AssignmentSubmissionNotification';
 import { PointAnimation } from './PointAnimation';
 import { boringAvatar, AVATAR_OPTIONS, avatarByCharacter } from '../utils/avatar';
 
@@ -489,6 +490,15 @@ export default function ClassDashboard({
                       ✓ Save Attendance
                     </button>
                   )}
+                  
+                  {/* Assignment Submission Notifications */}
+                  <AssignmentSubmissionNotification 
+                    submissions={activeClass.submissions || []} 
+                    onNotificationClick={(notification) => {
+                      setViewMode('messages');
+                    }}
+                  />
+                  
                   <div style={{ position: 'relative' }}>
                     <button onClick={() => setShowGridMenu(!showGridMenu)} style={styles.actionBtn}>
                       <Sliders size={18} /> Display
