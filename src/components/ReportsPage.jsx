@@ -3,6 +3,7 @@ import { Bar, Doughnut } from 'react-chartjs-2';
 import {
     Chart as ChartJS, CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend
 } from 'chart.js';
+import api from '../services/api';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend);
 
@@ -200,6 +201,7 @@ function generateTeacherNote(student, behavior, period, language = 'en') {
 export default function ReportsPage({ activeClass, studentId, isParentView, onBack }) {
     const [timePeriod, setTimePeriod] = useState('week'); // 'week', 'month', 'year'
     const [language, setLanguage] = useState('en'); // 'en' or 'zh'
+    const [realStats, setRealStats] = useState({});
 
     // 1. SECURITY FILTER: Only show the child if studentId is provided (Portal View)
     const displayStudents = useMemo(() => {
@@ -211,61 +213,145 @@ export default function ReportsPage({ activeClass, studentId, isParentView, onBa
         return activeClass.students;
     }, [activeClass, studentId]);
 
-    // 2. MOCK DATA AGGREGATION (Link this to your history collection later)
+    // Fetch real behavior data from student history
+    useEffect(() => {
+        const fetchRealStats = async () => {
+            const stats = {};
+            
+            for (const student of displayStudents) {
+                const studentHistory = student.history || [];
+                
+                // Filter history based on time period
+                const filteredHistory = filterHistoryByTimePeriod(studentHistory, timePeriod);
+                
+                // Separate positive and negative behaviors
+                const positiveBehaviors = filteredHistory.filter(h => h.pts > 0);
+                const negativeBehaviors = filteredHistory.filter(h => h.pts < 0);
+                
+                // Calculate totals
+                const positiveTotal = positiveBehaviors.reduce((sum, h) => sum + h.pts, 0);
+                const negativeTotal = negativeBehaviors.reduce((sum, h) => sum + h.pts, 0);
+                
+                // Group by card/label
+                const positiveByCard = {};
+                const negativeByCard = {};
+                
+                positiveBehaviors.forEach(h => {
+                    positiveByCard[h.label] = (positiveByCard[h.label] || 0) + h.pts;
+                });
+                
+                negativeBehaviors.forEach(h => {
+                    // Use absolute value for negative points in the count
+                    negativeByCard[h.label] = (negativeByCard[h.label] || 0) + Math.abs(h.pts);
+                });
+                
+                stats[student.id] = {
+                    positive: { 
+                        total: positiveTotal, 
+                        byCard: positiveByCard,
+                        wowCount: positiveBehaviors.length  // Count of positive behaviors
+                    },
+                    negative: { 
+                        total: negativeTotal, 
+                        byCard: negativeByCard,
+                        nonoCount: negativeBehaviors.length  // Count of negative behaviors
+                    }
+                };
+            }
+            
+            setRealStats(stats);
+        };
+
+        if (displayStudents.length > 0) {
+            fetchRealStats();
+        }
+    }, [displayStudents, timePeriod]);
+
+    // Helper function to filter history by time period
+    const filterHistoryByTimePeriod = (history, period) => {
+        const now = new Date();
+        let cutoffDate;
+
+        switch (period) {
+            case 'week':
+                cutoffDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                break;
+            case 'month':
+                cutoffDate = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+                break;
+            case 'year':
+                cutoffDate = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+                break;
+            default:
+                cutoffDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        }
+
+        return history.filter(entry => {
+            const entryDate = new Date(entry.timestamp);
+            return entryDate >= cutoffDate;
+        });
+    };
+
+    // REAL DATA AGGREGATION FROM STUDENT HISTORY
     const getStudentStats = (student) => {
-        // Create more realistic mock data based on student score
-        const basePositive = Math.max(0, student.score || 10);
-        const baseNegative = Math.min(0, -(Math.abs(student.score || 5)));
-        
-        // Define Wow and NoNo card types for better categorization
-        const wowCards = ["Great work", "Homework", "Helping others", "Participation", "Kindness"];
-        const nonoCards = ["Off-task", "Disrespectful", "Late", "Incomplete work", "Disruptive"];
-        
-        // Distribute points among Wow cards
-        const wowPoints = {};
-        wowCards.forEach((card, i) => {
-            wowPoints[card] = Math.max(1, Math.floor(basePositive / wowCards.length) + i);
-        });
-        
-        // Distribute points among NoNo cards
-        const nonoPoints = {};
-        nonoCards.forEach((card, i) => {
-            nonoPoints[card] = Math.max(1, Math.floor(Math.abs(baseNegative) / nonoCards.length) + i);
-        });
-        
-        return {
+        return realStats[student.id] || {
             positive: { 
-                total: basePositive, 
-                byCard: wowPoints,
-                wowCount: Object.keys(wowPoints).length  // Number of different Wow card types
+                total: 0, 
+                byCard: {},
+                wowCount: 0
             },
             negative: { 
-                total: baseNegative, 
-                byCard: nonoPoints,
-                nonoCount: Object.keys(nonoPoints).length  // Number of different NoNo card types
+                total: 0, 
+                byCard: {},
+                nonoCount: 0
             }
         };
     };
 
-    // 3. MOCK DAILY BEHAVIOR DATA AGGREGATION FUNCTION
+    // 3. REAL DAILY BEHAVIOR DATA AGGREGATION FUNCTION
     const getDailyBehaviorData = (student) => {
-        // This would come from actual data in a real implementation
-        // For now, generating mock data that sums all behavior types per day
-        // Simulating data that might come from a history collection
-        const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+        const studentHistory = student.history || [];
+        const filteredHistory = filterHistoryByTimePeriod(studentHistory, timePeriod);
+
+        // Group history by day depending on the time period
+        const dailyTotals = {};
         
-        // Generate data based on student's actual behavior data if available
-        // For demo purposes, we'll create different values for each student
-        const baseValue = student.score || 10;
-        const data = daysOfWeek.map((day, index) => {
-            // Vary the data based on day and student ID to make it look realistic
-            const dayFactor = (index + 1) * 2;
-            const studentFactor = parseInt(student.id) % 5;
-            return Math.max(1, Math.floor(baseValue + dayFactor + studentFactor + (Math.random() * 5)));
+        filteredHistory.forEach(entry => {
+            const entryDate = new Date(entry.timestamp);
+            let dateKey;
+            
+            if (timePeriod === 'week') {
+                // Format as day of week for weekly view
+                const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                dateKey = days[entryDate.getDay()];
+            } else if (timePeriod === 'month') {
+                // Format as day of month for monthly view
+                dateKey = `Day ${entryDate.getDate()}`;
+            } else { // year
+                // Format as month for yearly view
+                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                dateKey = months[entryDate.getMonth()];
+            }
+            
+            dailyTotals[dateKey] = (dailyTotals[dateKey] || 0) + entry.pts;
         });
+
+        // Create labels based on time period
+        let labels = [];
+        if (timePeriod === 'week') {
+            labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        } else if (timePeriod === 'month') {
+            // Show first 10 days for readability
+            labels = Array.from({ length: 10 }, (_, i) => `Day ${i + 1}`);
+        } else { // year
+            labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        }
+
+        // Fill in the data for each day
+        const data = labels.map(label => dailyTotals[label] || 0);
         
         return {
-            labels: daysOfWeek,
+            labels: labels,
             datasets: [{
                 label: 'Total Points',
                 data: data,
@@ -341,14 +427,14 @@ export default function ReportsPage({ activeClass, studentId, isParentView, onBa
                     const stats = getStudentStats(student);
                     const teacherNote = generateTeacherNote(student, stats, timePeriod, language);
 
-                    // Chart Data - Now using actual Wow/NoNo counts
+                    // Chart Data - Using actual positive vs negative points for accurate ratio
                     const doughnutData = {
                         labels: [
-                            language === 'zh' ? '哇卡' : 'Wow Cards', 
-                            language === 'zh' ? '诺诺卡' : 'NoNo Cards'
+                            language === 'zh' ? '积极行为' : 'Positive Behaviors', 
+                            language === 'zh' ? '需改进行为' : 'Needs Work'
                         ],
                         datasets: [{
-                            data: [stats.positive.wowCount || 0, stats.negative.nonoCount || 0],
+                            data: [Math.abs(stats.positive.total) || 0, Math.abs(stats.negative.total) || 0],
                             backgroundColor: ['#4CAF50', '#FF5252'],
                             borderWidth: 0,
                         }]
