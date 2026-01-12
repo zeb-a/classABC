@@ -58,6 +58,44 @@ function analyzeBehaviorPattern(behavior) {
     return analysis;
 }
 
+// Translation mapping for behavior cards
+const behaviorCardTranslations = {
+    en: {
+        'Participation': 'Participation',
+        'Kindness': 'Kindness',
+        'Leadership': 'Leadership',
+        'Helping': 'Helping Others',
+        'Respect': 'Respect',
+        'Teamwork': 'Teamwork',
+        'Creativity': 'Creativity',
+        'Focus': 'Focus',
+        'Off-task': 'Off-task Behavior',
+        'Disrespect': 'Disrespect',
+        'Disruption': 'Disruption',
+        'Bullying': 'Bullying'
+    },
+    zh: {
+        'Participation': '课堂参与',
+        'Kindness': '友善互助',
+        'Leadership': '领导能力',
+        'Helping': '帮助他人',
+        'Respect': '尊重他人',
+        'Teamwork': '团队合作',
+        'Creativity': '创造力',
+        'Focus': '专注力',
+        'Off-task': '分心行为',
+        'Disrespect': '不尊重行为',
+        'Disruption': '扰乱秩序',
+        'Bullying': '欺凌行为'
+    }
+};
+
+// Get translated card name
+function getTranslatedCardName(card, language) {
+    const langCards = behaviorCardTranslations[language] || behaviorCardTranslations.en;
+    return langCards[card] || card;
+}
+
 // Generate descriptive feedback based on behavior categories
 function describeBehaviors(behavior, count = 2, language = 'en') {
     const allBehaviors = [];
@@ -81,6 +119,8 @@ function describeBehaviors(behavior, count = 2, language = 'en') {
     
     // Return top behaviors with context
     return allBehaviors.slice(0, count).map(item => {
+        const translatedCard = getTranslatedCardName(item.card, language);
+        
         if (item.type === 'positive') {
             if (language === 'zh') {
                 // Better Chinese translations for positive behaviors
