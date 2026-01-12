@@ -138,6 +138,12 @@ if (studentData) {
       c.students?.some(s => s.id === studentData.studentId)
     ) || studentData.classData;
 
+    // Helper function to normalize student ID for comparison
+    const normalizeStudentId = (id) => {
+      if (id === undefined || id === null) return '';
+      return String(id).trim();
+    };
+
     // Filter assignments to only show those assigned to this student
     // If assignedTo is 'all' or if the student is in the selected list
     const studentAssignments = liveClassData?.assignments?.filter(assignment => {
@@ -146,8 +152,10 @@ if (studentData) {
         return true;
       }
       // If specific students are assigned, check if current student is in the list
+      // Handle potential type mismatches (string vs number IDs) and normalization
       if (Array.isArray(assignment.assignedTo) && assignment.assignedTo.length > 0) {
-        return assignment.assignedTo.includes(studentData.studentId);
+        const normalizedStudentId = normalizeStudentId(studentData.studentId);
+        return assignment.assignedTo.some(id => normalizeStudentId(id) === normalizedStudentId);
       }
       // Default: show the assignment
       return true;
@@ -507,7 +515,7 @@ const handleSubmit = () => {
     assignmentId: worksheet.id,
     assignmentTitle: worksheet.title,
     studentName: studentName,
-    studentId: studentId,
+    studentId: String(studentId), // Ensure studentId is string for consistency
     answers: answers,
     submittedAt: new Date().toISOString(),
     status: 'submitted'

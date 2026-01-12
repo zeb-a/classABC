@@ -92,7 +92,7 @@ export default function AssignmentsPage({ activeClass, onBack, onPublish }) {
               title: title || "New Worksheet", 
               questions, 
               date: new Date().toISOString(),
-              assignedTo: assignToAll ? 'all' : selectedStudents,
+              assignedTo: assignToAll ? 'all' : selectedStudents.map(id => String(id)), // Ensure IDs are strings
               assignedToAll: assignToAll
             })} 
             style={styles.publishBtn}
