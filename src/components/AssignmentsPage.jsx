@@ -231,9 +231,27 @@ export default function AssignmentsPage({ activeClass, onBack, onPublish }) {
                 <div style={styles.pairsContainer}>
                   {q.pairs.map((pair, pIdx) => (
                     <div key={pIdx} style={styles.pairRow}>
-                      <input placeholder="Item A" style={styles.pairInput} />
+                      <input 
+                        placeholder="Item A" 
+                        style={styles.pairInput}
+                        value={pair.left}
+                        onChange={e => {
+                          const newQs = [...questions];
+                          newQs[idx].pairs[pIdx].left = e.target.value;
+                          setQuestions(newQs);
+                        }}
+                      />
                       <div style={styles.matchLine} />
-                      <input placeholder="Match B" style={styles.pairInput} />
+                      <input 
+                        placeholder="Match B" 
+                        style={styles.pairInput}
+                        value={pair.right}
+                        onChange={e => {
+                          const newQs = [...questions];
+                          newQs[idx].pairs[pIdx].right = e.target.value;
+                          setQuestions(newQs);
+                        }}
+                      />
                     </div>
                   ))}
                   <button onClick={() => {

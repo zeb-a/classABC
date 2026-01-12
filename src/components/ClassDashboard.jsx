@@ -569,8 +569,13 @@ export default function ClassDashboard({
               <h3>Grade {currentSubmission.student.name}'s Submission</h3>
               <p style={{ marginBottom: '10px', color: '#666' }}>Assignment: {currentSubmission.assignment.title}</p>
               <div style={{ background: '#F9FAFB', padding: '15px', borderRadius: '10px', marginBottom: '20px' }}>
-                <strong>Student Answer:</strong>
-                <p>{currentSubmission.submission.answers[1] || "No answer provided"}</p>
+                <strong>Student Answers:</strong>
+                {Object.entries(currentSubmission.submission.answers).map(([questionId, answer], index) => (
+                  <div key={index} style={{ marginBottom: '10px', padding: '10px', background: '#fff', borderRadius: '5px' }}>
+                    <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>Question {index + 1}:</div>
+                    <div>{answer || "No answer provided"}</div>
+                  </div>
+                ))}
               </div>
               <div style={{ marginBottom: '20px' }}>
                 <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Points Awarded:</label>
