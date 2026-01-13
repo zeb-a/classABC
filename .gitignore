@@ -1,24 +1,52 @@
 ```
-# Database files
-pb_data/*.db
+# PocketBase specific files
+pb_data/*.db-wal
+pocketbase
+*.zip
+
+# Dependencies
+node_modules/
+.venv/
+venv/
+__pycache__/
+.mypy_cache/
+.pytest_cache/
+target/
+.gradle/
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
 
 # Environment
 .env
 .env.local
-.env.*
-
-# Logs
-*.log
-
-# Temp files
-*.tmp
+*.env.*
 
 # Editors
 .vscode/
 .idea/
 
-# OS
+# OS generated files
 .DS_Store
 Thumbs.db
+
+# Coverage reports
+coverage/
+htmlcov/
+.coverage
+
+# Build artifacts
+dist/
+build/
+*.pyc
+*.class
+*.o
+*.exe
+*.dll
+*.so
+*.a
+*.obj
+*.out
 ```
-pocketbase_0.22.28_linux_amd64.zip
