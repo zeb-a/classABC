@@ -91,6 +91,12 @@
         "id": "tasks_field",
         "name": "tasks",
         "type": "json"
+      },
+      {
+        "system": false,
+        "id": "student_submissions_field",
+        "name": "student_submissions",
+        "type": "json"
       }
     ]
   }

@@ -523,9 +523,9 @@ export default function ClassDashboard({
     style={styles.icon}
     badge={(
       <>
-        {activeClass.student_submissions?.filter(s => s.status === 'submitted').length > 0 && (
+        {(Array.isArray(activeClass.student_submissions) ? activeClass.student_submissions.filter(s => s.status === 'submitted').length : 0) > 0 && (
           <span style={styles.badge}>
-          {activeClass.student_submissions.filter(s => s.status === 'submitted').length}
+          {Array.isArray(activeClass.student_submissions) ? activeClass.student_submissions.filter(s => s.status === 'submitted').length : 0}
          </span>
         )}
       </>

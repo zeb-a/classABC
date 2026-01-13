@@ -1,24 +1,2 @@
-```
-# Database files
-pb_data/*.db
-
-# Environment
-.env
-.env.local
-.env.*
-
-# Logs
-*.log
-
-# Temp files
-*.tmp
-
-# Editors
-.vscode/
-.idea/
-
-# OS
-.DS_Store
-Thumbs.db
-```
-pocketbase_0.22.28_linux_amd64.zip
+Nothing needs to be added to .gitignore since only a source file (.jsx) was modified and no build artifacts, dependencies, or temporary files are present in the changes.
+pocketbase_0.22.2_linux_amd64.zip
