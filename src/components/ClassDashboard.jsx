@@ -166,8 +166,7 @@ export default function ClassDashboard({
   const generate5DigitCode = () => Math.floor(10000 + Math.random() * 90000).toString();
 
   // Calculate unread messages
-  const submissions = (activeClass.studentAssignments || [])
-  .filter(sa => sa.status === 'submitted');
+  const submissions = (activeClass.student_submissions || []);
   const unreadCount = submissions.filter(s => s.status === 'submitted').length;
 
   useEffect(() => {
@@ -221,7 +220,7 @@ export default function ClassDashboard({
 
       return {
         ...c,
-        assignments: [...(c.assignments || []), newAsn],
+        assignments: [...(c.assignments || []), newAssignment],
         studentAssignments: [
           ...(c.studentAssignments || []),
           ...studentAssignments
