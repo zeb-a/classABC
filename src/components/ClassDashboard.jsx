@@ -269,22 +269,22 @@ export default function ClassDashboard({
     if (!currentSubmission) return;
     const points = parseInt(gradeInput) || 0;
 
-        try {
-      // Update the class record in PocketBase to update the submission status
-      const classResponse = await fetch(`http://localhost:8090/api/collections/classes/records/${activeClass.id}`);
+    try {
+      // 1. Get latest class data to avoid overwrites
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4002';
+      const classResponse = await fetch(`${backendUrl}/api/collections/classes/records/${activeClass.id}`);
       if (!classResponse.ok) throw new Error('Failed to fetch class');
       const classData = await classResponse.json();
 
-      // Update the submission status in student_submissions
-      let updatedSubmissions = classData.student_submissions || [];
-      updatedSubmissions = updatedSubmissions.map(sub =>
+      // 2. Update the specific submission's status to graded
+      const updatedSubmissions = (Array.isArray(classData.student_submissions) ? [...classData.student_submissions] : []).map(sub =>
         sub.id === currentSubmission.submission.id
           ? { ...sub, status: 'graded', grade: points }
           : sub
       );
 
-      // Update the class record with updated submissions
-      const updateResponse = await fetch(`http://localhost:8090/api/collections/classes/records/${activeClass.id}`, {
+      // 3. Save to PocketBase
+      const updateResponse = await fetch(`${backendUrl}/api/collections/classes/records/${activeClass.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -323,7 +323,7 @@ export default function ClassDashboard({
         } : c
       ));
 
-         setGradingModalOpen(false);
+      setGradingModalOpen(false);
       setCurrentSubmission(null);
     } catch (error) {
       console.error('Error grading assignment:', error);
