@@ -256,7 +256,27 @@ function App() {
                   ...c,
                   assignments: [...(c.assignments || []), newAsn],
                   // Initialize submissions array if it doesn't exist
-                  submissions: c.submissions || []
+                  submissions: c.submissions || [],
+                  // Initialize student_submissions array if it doesn't exist
+                  student_submissions: c.student_submissions || [],
+                  // Create individual student assignments for each student
+                  studentAssignments: [
+                    ...(c.studentAssignments || []),
+                    ...(c.students || []).filter(s => {
+                      // If assigned to all or if this student is in the assignedTo list
+                      if (newAsn.assignedToAll) return true;
+                      if (Array.isArray(newAsn.assignedTo) && newAsn.assignedTo.includes(String(s.id))) return true;
+                      return false;
+                    }).map(s => ({
+                      id: Date.now() + '_' + s.id, // Unique ID combining timestamp and student ID
+                      assignmentId: newAsn.id,
+                      studentId: s.id,
+                      classId: c.id,
+                      status: 'assigned',
+                      answers: {},
+                      assignedAt: new Date().toISOString()
+                    }))
+                  ]
                 };
               }
               return c;
