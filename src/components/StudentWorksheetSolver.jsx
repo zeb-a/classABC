@@ -37,7 +37,7 @@ const StudentWorksheetSolver = ({ worksheet, onClose, studentName, studentId, cl
 
   const handleSubmit = async () => {
     const submission = {
-      id: Date.now(),
+      id: Date.now().toString(), // Use string ID to ensure consistency
       assignmentId: worksheet.id,
       assignmentTitle: worksheet.title,
       studentName: studentName,
@@ -48,36 +48,38 @@ const StudentWorksheetSolver = ({ worksheet, onClose, studentName, studentId, cl
     };
 
     try {
-      // Update the class record in PocketBase to include the submission
+      // 1. Get latest class data
       const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4002';
       const classResponse = await fetch(`${backendUrl}/api/collections/classes/records/${classId}`);
       if (!classResponse.ok) throw new Error('Failed to fetch class');
       const classData = await classResponse.json();
-
-      // Get existing submissions or initialize empty array
-      let existingSubmissions = classData.student_submissions || [];
+      
+      // 2. Append to existing submissions (don't overwrite!)
+      const existingSubmissions = Array.isArray(classData.student_submissions) ? [...classData.student_submissions] : [];
       
       // Check if student already submitted this assignment
       const existingSubmissionIndex = existingSubmissions.findIndex(
         sub => sub.assignmentId === worksheet.id && sub.studentId === String(studentId)
       );
 
+      let updatedSubmissions;
       if (existingSubmissionIndex !== -1) {
         // Update existing submission
-        existingSubmissions[existingSubmissionIndex] = submission;
+        updatedSubmissions = [...existingSubmissions];
+        updatedSubmissions[existingSubmissionIndex] = submission;
       } else {
         // Add new submission
-        existingSubmissions.push(submission);
+        updatedSubmissions = [...existingSubmissions, submission];
       }
 
-      // Update the class record with new submissions
+      // 3. Save to PocketBase immediately
       const updateResponse = await fetch(`${backendUrl}/api/collections/classes/records/${classId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          student_submissions: existingSubmissions
+          student_submissions: updatedSubmissions
         })
       });
 
@@ -105,7 +107,7 @@ const StudentWorksheetSolver = ({ worksheet, onClose, studentName, studentId, cl
         if (c.id === classId) {
           return {
             ...c,
-            student_submissions: existingSubmissions
+            student_submissions: updatedSubmissions
           };
         }
         return c;
