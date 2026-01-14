@@ -1,1 +1,45 @@
-Nothing needs to be added to the .gitignore file based on the provided changes. The listed files are all source code files (.jsx) which should not be ignored.
+```
+# Dependencies
+node_modules/
+
+# Build artifacts
+dist/
+build/
+target/
+
+# Logs
+*.log
+server/out.log
+
+# Environment
+.env
+.env.local
+*.env.*
+
+# Database files
+*.db
+
+# Compressed files
+*.zip
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.tmp
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Coverage reports
+coverage/
+htmlcov/
+.coverage
+
+# Authentication tokens
+server/token.txt
+```

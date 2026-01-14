@@ -145,9 +145,18 @@ if (studentData) {
       c.students?.some(s => normalizeStudentId(s.id) === normalizeStudentId(studentData.studentId))
     ) || studentData.classData;
 
-    // Filter assignments to only show those assigned to this student
+    // Get hidden assignments for this student from localStorage
+    const hiddenAssignments = JSON.parse(localStorage.getItem('hidden_assignments') || '{}');
+    const studentHidden = hiddenAssignments[studentData.studentId] || [];
+
+    // Filter assignments to only show those assigned to this student and not hidden
     // If assignedTo is 'all' or if the student is in the selected list
     const studentAssignments = liveClassData?.assignments?.filter(assignment => {
+      // Skip if assignment is hidden by student
+      if (studentHidden.includes(assignment.id)) {
+        return false;
+      }
+      
       // If assignedToAll is true, all students can see it
       if (assignment.assignedToAll === true || assignment.assignedTo === 'all') {
         return true;
@@ -185,7 +194,7 @@ if (studentData) {
         {/* Navbar */}
         <div style={modernStyles.portalNav}>
           <button onClick={() => { setStudentData(null); setPortalView(null); }} style={modernStyles.backBtn}>
-            <ChevronLeft size={18} /> Back to Home
+            <ChevronLeft size={18} /> Logout to Home
           </button>
           <div style={modernStyles.portalNavInfo}>
             <span style={{ fontWeight: 800 }}>{studentData.studentName}</span>
@@ -210,7 +219,11 @@ if (studentData) {
           
           <div key={assignmentsKey} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
             {studentAssignments.map((asn) => (
-              <div key={asn.id} style={modernStyles.assignmentCard}>
+              <div 
+                key={asn.id} 
+                style={{...modernStyles.assignmentCard, position: 'relative'}}
+                className="assignment-card"
+              >
                 <div style={modernStyles.asnIcon}><BookOpen color="#6366F1" /></div>
                 <div style={{ flex: 1 }}>
                   <h4 style={{ margin: '0 0 5px 0', fontWeight: 800 }}>{asn.title}</h4>
@@ -221,6 +234,27 @@ if (studentData) {
                   style={modernStyles.startBtn}
                 >
                   Start
+                </button>
+                
+                {/* Hide button for hiding assignments */}
+                <button 
+                  onClick={() => {
+                    if (window.confirm('Do you want to hide this assignment? You can restore it later.')) {
+                      // Store hidden assignments in localStorage
+                      const hiddenAssignments = JSON.parse(localStorage.getItem('hidden_assignments') || '{}');
+                      const studentHidden = hiddenAssignments[studentData.studentId] || [];
+                      studentHidden.push(asn.id);
+                      hiddenAssignments[studentData.studentId] = studentHidden;
+                      localStorage.setItem('hidden_assignments', JSON.stringify(hiddenAssignments));
+                      
+                      // Force re-render to update assignments list
+                      setClasses([...classes]);
+                    }
+                  }}
+                  style={modernStyles.hideBtn}
+                  title="Hide this assignment"
+                >
+                  ×
                 </button>
               </div>
             ))}
@@ -605,5 +639,6 @@ const modernStyles = {
   assignmentCard: { background: '#fff', padding: '20px', borderRadius: '24px', border: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: '15px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)' },
   asnIcon: { background: '#EEF2FF', padding: '12px', borderRadius: '14px' },
   startBtn: { background: '#4F46E5', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '10px', fontWeight: 700, cursor: 'pointer' },
+  hideBtn: { background: '#FEE2E2', color: '#EF4444', border: 'none', padding: '8px 12px', borderRadius: '50%', fontWeight: 'bold', cursor: 'pointer', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'absolute', top: '10px', right: '10px', fontSize: '16px' },
   emptyState: { gridColumn: '1/-1', textAlign: 'center', padding: '40px', color: '#64748B', fontWeight: 600, background: '#F1F5F9', borderRadius: '24px' }
 };
