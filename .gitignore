@@ -5,41 +5,36 @@ node_modules/
 # Build artifacts
 dist/
 build/
-target/
+*.js.map
 
 # Logs
 *.log
-server/out.log
 
 # Environment
 .env
 .env.local
 *.env.*
 
-# Database files
-*.db
-
-# Compressed files
-*.zip
-
-# IDE files
+# Editors
 .vscode/
 .idea/
-*.swp
-*.swo
-*.tmp
 
-# Python cache
+# Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 
-# Coverage reports
-coverage/
-htmlcov/
-.coverage
+# Temporary files
+*.tmp
+*.swp
+*~
 
-# Authentication tokens
-server/token.txt
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Sensitive files
+token.txt
 ```
+pb.zip
