@@ -3,7 +3,7 @@ import {
   Dices, Trophy, Settings, Home, UserPlus, Camera,
   ChevronLeft, ChevronRight, Sliders, ChevronDown,
   CheckSquare, BarChart2, QrCode, ClipboardList, Inbox,
-Plus, Send, CheckCircle, X, Bell
+Plus, Send, CheckCircle, X, Bell, Clock
 } from 'lucide-react';
 import ReportsPage from './ReportsPage';
 import StudentCard from './StudentCard';
@@ -14,6 +14,7 @@ import SafeAvatar from './SafeAvatar';
 import AssignmentSubmissionNotification from './AssignmentSubmissionNotification';
 import { PointAnimation } from './PointAnimation';
 import { boringAvatar, AVATAR_OPTIONS, avatarByCharacter } from '../utils/avatar';
+import KidTimer from './KidTimer';
 
 
 // --- SUB-COMPONENT: MESSAGES/GRADING VIEW ---
@@ -567,6 +568,13 @@ export default function ClassDashboard({
     style={styles.icon} 
   />
 
+  <SidebarIcon
+    icon={Clock}
+    label="Class Timer"
+    onClick={() => setViewMode('timer')}
+    isActive={viewMode === 'timer'}
+    style={styles.icon}
+  />
   <SidebarIcon 
     icon={BarChart2} 
     label="Reports" 

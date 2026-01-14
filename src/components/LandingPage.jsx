@@ -184,8 +184,8 @@ if (studentData) {
       <div style={{ background: '#F8FAFC', minHeight: '100vh', paddingBottom: '50px' }}>
         {/* Navbar */}
         <div style={modernStyles.portalNav}>
-          <button onClick={() => setStudentData(null)} style={modernStyles.backBtn}>
-            <ChevronLeft size={18} /> Logout
+          <button onClick={() => { setStudentData(null); setPortalView(null); }} style={modernStyles.backBtn}>
+            <ChevronLeft size={18} /> Back to Home
           </button>
           <div style={modernStyles.portalNavInfo}>
             <span style={{ fontWeight: 800 }}>{studentData.studentName}</span>
