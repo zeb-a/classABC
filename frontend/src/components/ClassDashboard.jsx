@@ -3,7 +3,7 @@ import {
   Dices, Trophy, Settings, Home, UserPlus, Camera,
   ChevronLeft, ChevronRight, Sliders, ChevronDown,
   CheckSquare, BarChart2, QrCode, ClipboardList, Inbox,
-Plus, Send, CheckCircle, X, Bell, Clock
+Plus, Send, CheckCircle, X, Bell, Clock, SquarePen
 } from 'lucide-react';
 import ReportsPage from './ReportsPage';
 import StudentCard from './StudentCard';
@@ -15,6 +15,7 @@ import AssignmentSubmissionNotification from './AssignmentSubmissionNotification
 import { PointAnimation } from './PointAnimation';
 import { boringAvatar, AVATAR_OPTIONS, avatarByCharacter } from '../utils/avatar';
 import KidTimer from './KidTimer';
+import Whiteboard from './Whiteboard';
 
 
 // --- SUB-COMPONENT: MESSAGES/GRADING VIEW ---
@@ -159,7 +160,7 @@ export default function ClassDashboard({
   const [showCodesPage, setShowCodesPage] = useState(false);
 
   // --- NEW STATES FOR ASSIGNMENTS & MESSAGES ---
-  const [viewMode, setViewMode] = useState('dashboard'); // 'dashboard', 'assignments', 'messages'
+  const [viewMode, setViewMode] = useState('dashboard'); // 'dashboard', 'assignments', 'messages', 'timer', 'whiteboard'
   const [gradingModalOpen, setGradingModalOpen] = useState(false);
   const [currentSubmission, setCurrentSubmission] = useState(null);
   const [gradeInput, setGradeInput] = useState(5); // Default points
@@ -575,6 +576,15 @@ export default function ClassDashboard({
     isActive={viewMode === 'timer'}
     style={styles.icon}
   />
+
+  <SidebarIcon
+    icon={SquarePen}
+    label="Whiteboard"
+    onClick={() => setViewMode('whiteboard')}
+    isActive={viewMode === 'whiteboard'}
+    style={styles.icon}
+  />
+
   <SidebarIcon 
     icon={BarChart2} 
     label="Reports" 
@@ -601,6 +611,38 @@ export default function ClassDashboard({
                onGrade={openGradingModal}
               onClose={() => setViewMode('dashboard')}
             />
+          ) : viewMode === 'timer' ? (
+            <div style={{ padding: '40px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100%', background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)' }}>
+              <h2 style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '20px', color: '#2D3436' }}>Class Focus Timer</h2>
+              <p style={{ fontSize: '16px', color: '#666', marginBottom: '40px', textAlign: 'center', maxWidth: '500px' }}>
+                Set a timer for focused work time. Students can see the countdown and stay on task!
+              </p>
+              <KidTimer 
+                initialMinutes={10} 
+                onComplete={() => {
+                  // Optional: Add notification when timer completes
+                  alert('Time is up! Great job focusing!');
+                }} 
+              />
+              <button 
+                onClick={() => setViewMode('dashboard')}
+                style={{
+                  marginTop: '40px',
+                  padding: '12px 24px',
+                  background: '#4CAF50',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  fontWeight: 'bold'
+                }}
+              >
+                Back to Dashboard
+              </button>
+            </div>
+          ) : viewMode === 'whiteboard' ? (
+            <Whiteboard onBack={() => setViewMode('dashboard')} />
           ) : (
             <>
               {/* --- STANDARD DASHBOARD VIEW --- */}
